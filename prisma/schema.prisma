@@ -1,0 +1,459 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  CUSTOMER
+  BUSINESS_OWNER
+  ADMIN
+}
+
+enum BookingStatus {
+  DRAFT
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+model User {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  firstName   String?
+  lastName    String?
+  phone       String?
+  zipCode     String?
+  role        UserRole @default(CUSTOMER)
+
+  // Security fields
+  emailVerified DateTime?
+  passwordHash  String?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  accounts        Account[]
+  sessions        Session[]
+  businesses      Business[]
+  bookings        Booking[]
+  waiverSignatures WaiverSignature[]
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model Business {
+  id          String @id @default(cuid())
+  name        String
+  slug        String @unique
+  description String?
+  email       String
+  phone       String?
+  address     String?
+  website     String?
+
+  // Branding
+  logoUrl     String?
+  primaryColor String?
+
+  // Settings
+  timezone    String @default("UTC")
+  currency    String @default("USD")
+
+  // Security
+  isActive    Boolean @default(true)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  ownerId     String
+  owner       User @relation(fields: [ownerId], references: [id])
+
+  experiences Experience[]
+  waivers     Waiver[]
+  integrations Integration[]
+  discountCodes DiscountCode[]
+
+  @@map("businesses")
+}
+
+model Experience {
+  id          String @id @default(cuid())
+  name        String
+  slug        String
+  description String?
+  imageUrl    String?
+
+  // Settings
+  isActive    Boolean @default(true)
+  sortOrder   Int     @default(0)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  products Product[]
+
+  @@unique([businessId, slug])
+  @@map("experiences")
+}
+
+model Product {
+  id          String @id @default(cuid())
+  name        String
+  slug        String
+  description String?
+  imageUrl    String?
+
+  // Pricing
+  basePrice   Decimal @db.Decimal(10, 2)
+
+  // Duration in minutes
+  duration    Int
+
+  // Settings
+  isActive    Boolean @default(true)
+  sortOrder   Int     @default(0)
+  maxCapacity Int?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  experienceId String
+  experience   Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+
+  ticketTypes TicketType[]
+  addOns      AddOn[]
+  sessions    Session_Product[]
+
+  @@unique([experienceId, slug])
+  @@map("products")
+}
+
+model TicketType {
+  id          String @id @default(cuid())
+  name        String
+  description String?
+
+  // Pricing
+  price       Decimal @db.Decimal(10, 2)
+
+  // Age restrictions
+  minAge      Int?
+  maxAge      Int?
+
+  // Conditional pricing (requires another ticket type)
+  requiresTicketTypeId String?
+  requiresTicketType   TicketType? @relation("RequiredTicketType", fields: [requiresTicketTypeId], references: [id])
+  requiredForTickets   TicketType[] @relation("RequiredTicketType")
+
+  // Settings
+  isActive    Boolean @default(true)
+  sortOrder   Int     @default(0)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  bookingItems BookingItem[]
+
+  @@map("ticket_types")
+}
+
+model AddOn {
+  id          String @id @default(cuid())
+  name        String
+  description String?
+  price       Decimal @db.Decimal(10, 2)
+  imageUrl    String?
+
+  // Settings
+  isRequired  Boolean @default(false)
+  isActive    Boolean @default(true)
+  sortOrder   Int     @default(0)
+  inventory   Int?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  bookingItems BookingItem[]
+
+  @@map("add_ons")
+}
+
+model Session_Product {
+  id        String @id @default(cuid())
+  startTime DateTime
+  endTime   DateTime
+
+  // Capacity
+  maxCapacity    Int
+  bookedCapacity Int @default(0)
+
+  // Settings
+  isActive Boolean @default(true)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  bookings Booking[]
+
+  @@map("sessions")
+}
+
+model Booking {
+  id            String        @id @default(cuid())
+  bookingNumber String        @unique
+
+  // Customer info (for guest bookings)
+  customerEmail String
+  customerFirstName String?
+  customerLastName  String?
+  customerPhone     String?
+  customerZipCode   String?
+
+  // Pricing
+  subtotal      Decimal       @db.Decimal(10, 2)
+  tax           Decimal       @db.Decimal(10, 2)
+  discount      Decimal       @db.Decimal(10, 2) @default(0.00)
+  total         Decimal       @db.Decimal(10, 2)
+
+  // Status
+  status        BookingStatus @default(PENDING)
+  paymentStatus PaymentStatus @default(PENDING)
+
+  // Notifications
+  reminderSent  Boolean @default(false)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  userId       String?
+  user         User?           @relation(fields: [userId], references: [id])
+
+  sessionId    String
+  session      Session_Product @relation(fields: [sessionId], references: [id])
+
+  items        BookingItem[]
+  payments     Payment[]
+  waiverSignatures WaiverSignature[]
+
+  @@map("bookings")
+}
+
+model BookingItem {
+  id       String @id @default(cuid())
+  quantity Int
+
+  // Pricing snapshot
+  unitPrice Decimal @db.Decimal(10, 2)
+  total     Decimal @db.Decimal(10, 2)
+
+  // Relations
+  bookingId String
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  ticketTypeId String?
+  ticketType   TicketType? @relation(fields: [ticketTypeId], references: [id])
+
+  addOnId String?
+  addOn   AddOn? @relation(fields: [addOnId], references: [id])
+
+  @@map("booking_items")
+}
+
+model Payment {
+  id              String        @id @default(cuid())
+  paymentIntentId String?       @unique
+  amount          Decimal       @db.Decimal(10, 2)
+  status          PaymentStatus @default(PENDING)
+
+  // Payment details
+  paymentMethod   String?
+  currency        String        @default("USD")
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  bookingId String
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+}
+
+model Waiver {
+  id          String @id @default(cuid())
+  title       String
+  content     String @db.Text
+  version     String
+
+  // Settings
+  isActive    Boolean @default(true)
+  isRequired  Boolean @default(true)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  signatures WaiverSignature[]
+
+  @@map("waivers")
+}
+
+model WaiverSignature {
+  id            String @id @default(cuid())
+  signatureData String @db.Text
+  ipAddress     String
+  userAgent     String?
+
+  // Timestamps
+  signedAt DateTime @default(now())
+
+  // Relations
+  waiverId  String
+  waiver    Waiver @relation(fields: [waiverId], references: [id])
+
+  userId    String?
+  user      User? @relation(fields: [userId], references: [id])
+
+  bookingId String?
+  booking   Booking? @relation(fields: [bookingId], references: [id])
+
+  @@map("waiver_signatures")
+}
+
+model DiscountCode {
+  id          String @id @default(cuid())
+  code        String @unique
+  description String?
+
+  // Discount settings
+  discountType     String // PERCENTAGE, FIXED_AMOUNT
+  discountValue    Decimal @db.Decimal(10, 2)
+  minOrderAmount   Decimal? @db.Decimal(10, 2)
+  maxDiscountAmount Decimal? @db.Decimal(10, 2)
+
+  // Usage limits
+  maxUses         Int?
+  currentUses     Int @default(0)
+  maxUsesPerUser  Int?
+
+  // Validity
+  validFrom       DateTime
+  validUntil      DateTime?
+  isActive        Boolean @default(true)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  businessId String?
+  business   Business? @relation(fields: [businessId], references: [id])
+
+  @@map("discount_codes")
+}
+
+model Integration {
+  id       String @id @default(cuid())
+  provider String // GOOGLE_ANALYTICS, FACEBOOK_PIXEL, TIKTOK_PIXEL, etc.
+
+  // Settings
+  isActive Boolean @default(true)
+  config   Json // Store provider-specific configuration
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@unique([businessId, provider])
+  @@map("integrations")
+}
