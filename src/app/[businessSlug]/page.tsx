@@ -72,7 +72,7 @@ export default async function ProductsPage({ params }: ProductsPageProps) {
             <span className="text-white text-sm font-bold">!</span>
           </div>
           <p className="text-purple-800">
-            <strong>Spots sell out fast!</strong> Secure your tickets now to guarantee entry!
+            <strong>Spots sell out fast!</strong> Secure your tickets now to guarantee entry! TEST
           </p>
         </div>
 
