@@ -16,7 +16,7 @@ export default function BookingsPage() {
           <Calendar className="w-16 h-16 text-gray-300 mb-4" />
           <h3 className="text-xl font-semibold text-gray-700 mb-2">Coming Soon</h3>
           <p className="text-gray-500 text-center max-w-md">
-            The bookings management system is currently under development. You&apos;ll be able to view, manage, and track all customer bookings from here. Adding this text for a new commit.
+            The bookings management system is currently under development. You&apos;ll be able to view, manage, and track all customer bookings from here. 
           </p>
           <div className="mt-6 flex items-center gap-2 text-sm text-gray-400">
             <Clock className="w-4 h-4" />
