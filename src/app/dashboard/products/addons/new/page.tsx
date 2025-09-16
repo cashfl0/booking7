@@ -46,7 +46,7 @@ export default async function NewAddOnPage() {
         </div>
         <div className="bg-orange-50 border border-orange-200 rounded-lg p-6">
           <p className="text-orange-800">
-            Add-ons are linked to specific products. You'll need to create at least one product in an experience first.
+            Add-ons are linked to specific products. You&apos;ll need to create at least one product in an experience first.
           </p>
         </div>
       </div>

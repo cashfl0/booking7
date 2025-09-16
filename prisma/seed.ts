@@ -6,7 +6,7 @@ const prisma = new PrismaClient()
 async function main() {
   // Create admin user
   const adminPassword = await bcrypt.hash('admin123', 12)
-  const admin = await prisma.user.upsert({
+  await prisma.user.upsert({
     where: { email: 'admin@funbox.com' },
     update: {},
     create: {
@@ -115,7 +115,7 @@ async function main() {
   })
 
   // Create Birthday Tour product
-  const birthdayTour = await prisma.product.upsert({
+  await prisma.product.upsert({
     where: {
       experienceId_slug: {
         experienceId: bounceExperience.id,

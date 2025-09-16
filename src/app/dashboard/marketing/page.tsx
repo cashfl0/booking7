@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Megaphone, Clock } from 'lucide-react'
 
 export default function MarketingPage() {
@@ -16,7 +16,7 @@ export default function MarketingPage() {
           <Megaphone className="w-16 h-16 text-gray-300 mb-4" />
           <h3 className="text-xl font-semibold text-gray-700 mb-2">Coming Soon</h3>
           <p className="text-gray-500 text-center max-w-md">
-            Marketing tools are currently under development. You'll be able to create promotions, manage email campaigns, track marketing pixels, and analyze campaign performance.
+            Marketing tools are currently under development. You&apos;ll be able to create promotions, manage email campaigns, track marketing pixels, and analyze campaign performance.
           </p>
           <div className="mt-6 flex items-center gap-2 text-sm text-gray-400">
             <Clock className="w-4 h-4" />

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { Decimal } from '@prisma/client/runtime/library'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -23,9 +24,8 @@ interface Product {
 interface AddOn {
   id: string
   name: string
-  slug: string
   description: string | null
-  price: number
+  price: Decimal
   productId: string
   isActive: boolean
   sortOrder: number
@@ -50,7 +50,6 @@ export default function EditAddOnForm({ addOn, products, businessId }: EditAddOn
   const [deleting, setDeleting] = useState(false)
   const [formData, setFormData] = useState({
     name: addOn.name,
-    slug: addOn.slug,
     description: addOn.description || '',
     price: addOn.price.toString(),
     productId: addOn.productId,
@@ -58,20 +57,11 @@ export default function EditAddOnForm({ addOn, products, businessId }: EditAddOn
     sortOrder: addOn.sortOrder
   })
 
-  const generateSlug = (name: string) => {
-    return name
-      .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
-      .trim()
-  }
 
   const handleNameChange = (name: string) => {
     setFormData(prev => ({
       ...prev,
-      name,
-      slug: generateSlug(name)
+      name
     }))
   }
 
@@ -185,19 +175,6 @@ export default function EditAddOnForm({ addOn, products, businessId }: EditAddOn
             </p>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="slug">URL Slug *</Label>
-            <Input
-              id="slug"
-              value={formData.slug}
-              onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
-              placeholder="bounce-socks"
-              required
-            />
-            <p className="text-xs text-gray-500">
-              This will be used in URLs. It's automatically generated from the name but can be customized.
-            </p>
-          </div>
 
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>

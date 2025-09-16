@@ -146,7 +146,7 @@ export default async function DashboardPage() {
       startTime: session.startTime,
       endTime: session.endTime,
       bookingCount: session._count.bookings,
-      capacity: session.capacity
+      capacity: session.maxCapacity
     })),
     recentBookings: recentBookings.map(booking => ({
       id: booking.id,

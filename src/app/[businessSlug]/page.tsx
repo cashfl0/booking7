@@ -1,10 +1,28 @@
 import { prisma } from '@/lib/prisma'
 import { notFound } from 'next/navigation'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 import Image from 'next/image'
+import { Decimal } from '@prisma/client/runtime/library'
+
+type ProductWithTicketTypes = {
+  id: string
+  name: string
+  slug: string
+  description: string | null
+  imageUrl: string | null
+  basePrice: Decimal
+  duration: number
+  isActive: boolean
+  ticketTypes?: {
+    id: string
+    name: string
+    price: Decimal
+    minAge: number | null
+    maxAge: number | null
+  }[]
+}
 
 interface ProductsPageProps {
   params: Promise<{ businessSlug: string }>
@@ -118,11 +136,11 @@ export default async function ProductsPage({ params }: ProductsPageProps) {
 }
 
 function ProductCard({ product, businessSlug }: {
-  product: any,
+  product: ProductWithTicketTypes,
   businessSlug: string
 }) {
   const basePrice = product.ticketTypes?.[0]?.price || product.basePrice
-  const isFree = basePrice === 0
+  const isFree = basePrice.equals(0)
 
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">

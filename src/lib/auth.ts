@@ -1,11 +1,17 @@
-import { NextAuthOptions } from 'next-auth'
+import { NextAuthOptions, User } from 'next-auth'
 import { PrismaAdapter } from '@auth/prisma-adapter'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import { prisma } from './prisma'
 import bcrypt from 'bcryptjs'
 import { UserRole } from '@prisma/client'
 
+interface CustomUser extends User {
+  role: UserRole
+  businessId?: string
+}
+
 export const authOptions: NextAuthOptions = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   adapter: PrismaAdapter(prisma) as any,
   providers: [
     CredentialsProvider({
@@ -58,8 +64,9 @@ export const authOptions: NextAuthOptions = {
       console.log('JWT callback - token before:', token)
 
       if (user) {
-        token.role = (user as any).role
-        token.businessId = (user as any).businessId
+        const customUser = user as CustomUser
+        token.role = customUser.role
+        token.businessId = customUser.businessId
       }
 
       console.log('JWT callback - token after:', token)
@@ -71,14 +78,16 @@ export const authOptions: NextAuthOptions = {
 
       if (session?.user && token?.sub) {
         session.user.id = token.sub
-        session.user.role = token.role
-        session.user.businessId = token.businessId
+        Object.assign(session.user, {
+          role: token.role,
+          businessId: token.businessId
+        })
       }
 
       console.log('Session callback - session after:', session)
       return session
     },
-    async signIn({ user }) {
+    async signIn() {
       return true
     },
     async redirect({ url, baseUrl }) {

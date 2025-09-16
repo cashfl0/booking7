@@ -155,11 +155,11 @@ export default async function ProductsOverviewPage() {
           </CardHeader>
           <CardContent className="text-blue-800">
             <p className="mb-4">
-              Welcome! To start accepting bookings, you'll need to set up your products in this order:
+              Welcome! To start accepting bookings, you&apos;ll need to set up your products in this order:
             </p>
             <ol className="list-decimal list-inside space-y-2 mb-4">
-              <li>Create <strong>Experiences</strong> (categories like "Bounce Time", "Birthday Parties")</li>
-              <li>Create <strong>Add-ons</strong> (optional items like "Socks")</li>
+              <li>Create <strong>Experiences</strong> (categories like &quot;Bounce Time&quot;, &quot;Birthday Parties&quot;)</li>
+              <li>Create <strong>Add-ons</strong> (optional items like &quot;Socks&quot;)</li>
               <li>Create <strong>Events</strong> (specific bookable sessions with dates, times, and pricing)</li>
             </ol>
             <Button asChild>

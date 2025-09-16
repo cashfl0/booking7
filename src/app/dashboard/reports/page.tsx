@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { FileText, Clock } from 'lucide-react'
 
 export default function ReportsPage() {
@@ -16,7 +16,7 @@ export default function ReportsPage() {
           <FileText className="w-16 h-16 text-gray-300 mb-4" />
           <h3 className="text-xl font-semibold text-gray-700 mb-2">Coming Soon</h3>
           <p className="text-gray-500 text-center max-w-md">
-            Advanced reporting and analytics are currently under development. You'll be able to view revenue reports, booking trends, customer insights, and more.
+            Advanced reporting and analytics are currently under development. You&apos;ll be able to view revenue reports, booking trends, customer insights, and more.
           </p>
           <div className="mt-6 flex items-center gap-2 text-sm text-gray-400">
             <Clock className="w-4 h-4" />

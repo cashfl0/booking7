@@ -87,7 +87,7 @@ export default function DashboardOverview({ metrics }: DashboardOverviewProps) {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Overview</h1>
-        <p className="text-gray-600">Today's performance at a glance</p>
+        <p className="text-gray-600">Today&apos;s performance at a glance</p>
       </div>
 
       {/* Daily Stats Cards */}
@@ -96,7 +96,7 @@ export default function DashboardOverview({ metrics }: DashboardOverviewProps) {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Today's Revenue</p>
+                <p className="text-sm font-medium text-gray-600">Today&apos;s Revenue</p>
                 <p className="text-2xl font-bold text-gray-900">
                   ${metrics.todayRevenue.toFixed(2)}
                 </p>

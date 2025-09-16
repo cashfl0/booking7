@@ -1,5 +1,5 @@
-const { PrismaClient } = require('@prisma/client')
-const bcrypt = require('bcryptjs')
+import { PrismaClient } from '@prisma/client'
+import bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
 
@@ -34,7 +34,7 @@ async function main() {
     // Create business owner
     const hashedPassword = await bcrypt.hash('password123', 12)
 
-    const businessOwner = await prisma.user.create({
+    await prisma.user.create({
       data: {
         email: 'owner@funbox.com',
         name: 'John Owner',

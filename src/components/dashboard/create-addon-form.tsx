@@ -30,7 +30,6 @@ export default function CreateAddOnForm({ businessId, products }: CreateAddOnFor
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
-    slug: '',
     description: '',
     price: '',
     productId: '',
@@ -38,20 +37,11 @@ export default function CreateAddOnForm({ businessId, products }: CreateAddOnFor
     sortOrder: 1
   })
 
-  const generateSlug = (name: string) => {
-    return name
-      .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
-      .trim()
-  }
 
   const handleNameChange = (name: string) => {
     setFormData(prev => ({
       ...prev,
-      name,
-      slug: generateSlug(name)
+      name
     }))
   }
 
@@ -122,19 +112,6 @@ export default function CreateAddOnForm({ businessId, products }: CreateAddOnFor
             </p>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="slug">URL Slug *</Label>
-            <Input
-              id="slug"
-              value={formData.slug}
-              onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
-              placeholder="bounce-socks"
-              required
-            />
-            <p className="text-xs text-gray-500">
-              This will be used in URLs. It's automatically generated from the name but can be customized.
-            </p>
-          </div>
 
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>

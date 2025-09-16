@@ -34,6 +34,7 @@ export default async function EventsPage() {
       product: {
         select: {
           name: true,
+          basePrice: true,
           experience: {
             select: { name: true }
           }
@@ -148,7 +149,7 @@ export default async function EventsPage() {
                                   {event.isActive ? "Active" : "Inactive"}
                                 </Badge>
                                 <Badge variant="outline">
-                                  ${Number(event.price).toFixed(2)}
+                                  ${event.product.basePrice.toFixed(2)}
                                 </Badge>
                               </div>
 
@@ -172,7 +173,7 @@ export default async function EventsPage() {
                                 <div className="flex items-center gap-2">
                                   <Users className="w-4 h-4" />
                                   <span>
-                                    {event._count.bookings}/{event.capacity} booked
+                                    {event._count.bookings}/{event.maxCapacity} booked
                                   </span>
                                 </div>
                               </div>
@@ -214,7 +215,7 @@ export default async function EventsPage() {
                                 </h3>
                                 <Badge variant="secondary">Completed</Badge>
                                 <Badge variant="outline">
-                                  ${Number(event.price).toFixed(2)}
+                                  ${event.product.basePrice.toFixed(2)}
                                 </Badge>
                               </div>
 
@@ -238,7 +239,7 @@ export default async function EventsPage() {
                                 <div className="flex items-center gap-2">
                                   <Users className="w-4 h-4" />
                                   <span>
-                                    {event._count.bookings}/{event.capacity} attended
+                                    {event._count.bookings}/{event.maxCapacity} attended
                                   </span>
                                 </div>
                               </div>

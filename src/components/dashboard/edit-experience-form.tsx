@@ -169,7 +169,7 @@ export default function EditExperienceForm({ experience, businessId, productCoun
               required
             />
             <p className="text-xs text-gray-500">
-              This will be used in URLs. It's automatically generated from the name but can be customized.
+              This will be used in URLs. It&apos;s automatically generated from the name but can be customized.
             </p>
           </div>
 

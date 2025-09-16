@@ -17,7 +17,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     }
 
     const body = await request.json()
-    const { name, slug, description, price, productId, isActive, sortOrder, businessId } = body
+    const { name, description, price, productId, isActive, sortOrder, businessId } = body
 
     // Verify the user owns this business
     const business = await prisma.business.findFirst({
@@ -57,17 +57,17 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'Product not found or not authorized' }, { status: 403 })
     }
 
-    // Check if slug is already in use for this product (excluding current add-on)
-    const slugConflict = await prisma.addOn.findFirst({
+    // Check if name is already in use for this product (excluding current add-on)
+    const nameConflict = await prisma.addOn.findFirst({
       where: {
         productId,
-        slug,
+        name,
         NOT: { id }
       }
     })
 
-    if (slugConflict) {
-      return NextResponse.json({ error: 'An add-on with this URL slug already exists for this product' }, { status: 400 })
+    if (nameConflict) {
+      return NextResponse.json({ error: 'An add-on with this name already exists for this product' }, { status: 400 })
     }
 
     // Update the add-on
@@ -75,7 +75,6 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       where: { id },
       data: {
         name: name.trim(),
-        slug: slug.trim(),
         description: description?.trim() || null,
         price: Number(price),
         productId,

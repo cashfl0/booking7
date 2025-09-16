@@ -13,7 +13,21 @@ export async function seedBusinessOwner() {
       return existingOwner
     }
 
-    // Create business first
+    // Create business owner first
+    const hashedPassword = await hash('password123', 12)
+
+    const businessOwner = await prisma.user.create({
+      data: {
+        email: 'owner@funbox.com',
+        firstName: 'John',
+        lastName: 'Owner',
+        role: 'BUSINESS_OWNER',
+        passwordHash: hashedPassword,
+        emailVerified: new Date()
+      }
+    })
+
+    // Create business with owner
     const business = await prisma.business.create({
       data: {
         name: 'Funbox Indoor',
@@ -25,21 +39,8 @@ export async function seedBusinessOwner() {
         website: 'https://funbox.com',
         timezone: 'America/New_York',
         currency: 'USD',
-        isActive: true
-      }
-    })
-
-    // Create business owner
-    const hashedPassword = await hash('password123', 12)
-
-    const businessOwner = await prisma.user.create({
-      data: {
-        email: 'owner@funbox.com',
-        name: 'John Owner',
-        password: hashedPassword,
-        role: 'BUSINESS_OWNER',
-        businessId: business.id,
-        emailVerified: new Date()
+        isActive: true,
+        ownerId: businessOwner.id
       }
     })
 
