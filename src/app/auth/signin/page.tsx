@@ -122,21 +122,13 @@ function SignInForm() {
               </Button>
             </form>
 
-            <div className="mt-6 text-center">
-              <p className="text-sm text-gray-600">
-                Don&apos;t have an account?{' '}
-                <Link href="/auth/signup" className="text-blue-600 hover:underline">
-                  Sign up
-                </Link>
-              </p>
-            </div>
 
             {/* Test Credentials */}
             <div className="mt-6 p-3 bg-blue-50 border border-blue-200 rounded-md">
               <p className="text-sm font-medium text-blue-800 mb-1">Test Credentials:</p>
               <p className="text-xs text-blue-700">
-                Email: owner@funbox.com<br />
-                Password: password123
+                Email: admin@funbox.com<br />
+                Password: admin123
               </p>
             </div>
           </CardContent>
