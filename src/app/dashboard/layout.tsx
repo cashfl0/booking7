@@ -17,7 +17,7 @@ export default async function DashboardLayout({
     redirect('/auth/signin')
   }
 
-  if (session.user.role !== 'BUSINESS_OWNER') {
+  if (session.user.role !== 'BUSINESS_OWNER' && session.user.role !== 'ADMIN') {
     console.log('Redirecting to signin - wrong role:', session.user.role)
     redirect('/auth/signin')
   }
