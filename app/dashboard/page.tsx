@@ -50,7 +50,7 @@ export default async function DashboardPage() {
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">{business.name}</h1>
-              <p className="text-gray-600">Welcome back, {session.user.firstName}</p>
+              <p className="text-gray-600">Welcome back, {session.user.name || session.user.email}</p>
             </div>
             <div className="text-sm text-gray-500">
               Role: {session.user.role}
@@ -98,7 +98,7 @@ export default async function DashboardPage() {
                         <div className="mt-2 space-x-4 text-sm text-gray-500">
                           <span>Duration: {experience.duration} minutes</span>
                           <span>Max Capacity: {experience.maxCapacity}</span>
-                          <span>Base Price: ${experience.basePrice}</span>
+                          <span>Base Price: ${experience.basePrice.toString()}</span>
                         </div>
                       </div>
                       <div className="text-right">

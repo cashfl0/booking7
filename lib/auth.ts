@@ -41,11 +41,10 @@ export const authOptions: NextAuthOptions = {
         return {
           id: user.id,
           email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
+          name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email,
           role: user.role,
-          businessId: user.businessId,
-          businessSlug: user.business?.slug
+          businessId: user.businessId || '',
+          businessSlug: user.business?.slug || ''
         }
       }
     })
