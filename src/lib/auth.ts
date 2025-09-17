@@ -22,17 +22,21 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
+          console.log('Missing credentials')
           return null
         }
 
         const user = await prisma.user.findUnique({
           where: { email: credentials.email },
           include: {
-            Business: true
+            businesses: true
           }
         })
 
+        console.log('Found user:', !!user, 'Has password:', !!user?.passwordHash)
+
         if (!user || !user.passwordHash) {
+          console.log('User not found or no password hash')
           return null
         }
 
@@ -41,7 +45,10 @@ export const authOptions: NextAuthOptions = {
           user.passwordHash
         )
 
+        console.log('Password match:', passwordMatch)
+
         if (!passwordMatch) {
+          console.log('Password does not match')
           return null
         }
 
@@ -50,7 +57,7 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           name: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.email,
           role: user.role,
-          businessId: user.Business?.[0]?.id || null,
+          businessId: user.businesses?.[0]?.id || null,
         }
       }
     })
