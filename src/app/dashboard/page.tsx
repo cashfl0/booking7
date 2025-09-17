@@ -1,166 +1,130 @@
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
-import DashboardOverview from '@/components/dashboard/dashboard-overview'
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions)
 
-  if (!session?.user.id) {
-    return <div>No user session found</div>
+  if (!session) {
+    redirect('/auth/signin')
   }
 
-  // Find the business owned by this user
-  const business = await prisma.business.findFirst({
-    where: { ownerId: session.user.id }
-  })
-
-  if (!business) {
-    return <div>No business associated with this account</div>
-  }
-
-  // Get today's date range
-  const today = new Date()
-  const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate())
-  const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1)
-
-  // Fetch today's metrics
-  const [
-    todayBookings,
-    todayRevenue,
-    todayGuests,
-    upcomingSessions,
-    totalCustomers,
-    recentBookings
-  ] = await Promise.all([
-    // Today's bookings count
-    prisma.booking.count({
-      where: {
-        session: {
-          product: {
-            experience: { businessId: business.id }
-          }
-        },
-        createdAt: { gte: startOfDay, lt: endOfDay },
-        status: { not: 'CANCELLED' }
-      }
-    }),
-
-    // Today's revenue
-    prisma.booking.aggregate({
-      where: {
-        session: {
-          product: {
-            experience: { businessId: business.id }
-          }
-        },
-        createdAt: { gte: startOfDay, lt: endOfDay },
-        status: { in: ['CONFIRMED', 'COMPLETED'] }
-      },
-      _sum: { total: true }
-    }),
-
-    // Today's guest count (sum of all booking items quantities)
-    prisma.bookingItem.aggregate({
-      where: {
-        booking: {
-          session: {
-            product: {
-              experience: { businessId: business.id }
-            }
-          },
-          createdAt: { gte: startOfDay, lt: endOfDay },
-          status: { not: 'CANCELLED' }
-        }
-      },
-      _sum: { quantity: true }
-    }),
-
-    // Upcoming sessions (next 3 hours)
-    prisma.session_Product.findMany({
-      where: {
-        product: {
-          experience: { businessId: business.id }
-        },
-        startTime: {
-          gte: new Date(),
-          lte: new Date(Date.now() + 3 * 60 * 60 * 1000) // 3 hours from now
-        }
-      },
-      include: {
-        product: { select: { name: true } },
-        _count: { select: { bookings: true } }
-      },
-      orderBy: { startTime: 'asc' },
-      take: 5
-    }),
-
-    // Total customers
-    prisma.user.count({
-      where: {
-        role: 'CUSTOMER',
-        bookings: {
-          some: {
-            session: {
-              product: {
-                experience: { businessId: business.id }
+  // Get basic stats for the dashboard
+  const business = await prisma.business.findUnique({
+    where: { id: session.user.businessId },
+    include: {
+      experiences: {
+        include: {
+          events: {
+            include: {
+              sessions: {
+                include: {
+                  bookings: true
+                }
               }
             }
           }
         }
       }
-    }),
+    }
+  })
 
-    // Recent bookings
-    prisma.booking.findMany({
-      where: {
-        session: {
-          product: {
-            experience: { businessId: business.id }
-          }
-        }
-      },
-      include: {
-        user: { select: { firstName: true, lastName: true, email: true } },
-        session: {
-          select: {
-            startTime: true,
-            endTime: true,
-            product: { select: { name: true } }
-          }
-        }
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 5
-    })
-  ])
-
-  const metrics = {
-    todayRevenue: Number(todayRevenue._sum.total || 0),
-    todayBookings,
-    todayGuests: Number(todayGuests._sum.quantity || 0),
-    totalCustomers,
-    upcomingSessions: upcomingSessions.map(session => ({
-      id: session.id,
-      productName: session.product.name,
-      startTime: session.startTime,
-      endTime: session.endTime,
-      bookingCount: session._count.bookings,
-      capacity: session.maxCapacity
-    })),
-    recentBookings: recentBookings.map(booking => ({
-      id: booking.id,
-      customerName: booking.user
-        ? `${booking.user.firstName || ''} ${booking.user.lastName || ''}`.trim() || 'User'
-        : `${booking.customerFirstName || ''} ${booking.customerLastName || ''}`.trim() || 'Guest',
-      customerEmail: booking.user?.email || booking.customerEmail,
-      productName: booking.session?.product.name || 'Unknown Product',
-      sessionTime: booking.session?.startTime,
-      amount: Number(booking.total),
-      status: booking.status,
-      createdAt: booking.createdAt
-    }))
+  if (!business) {
+    redirect('/auth/signin')
   }
 
-  return <DashboardOverview metrics={metrics} />
+  // Calculate stats
+  const totalExperiences = business.experiences.length
+  const totalEvents = business.experiences.reduce((sum, exp) => sum + exp.events.length, 0)
+  const totalSessions = business.experiences.reduce((sum, exp) =>
+    sum + exp.events.reduce((eventSum, event) => eventSum + event.sessions.length, 0), 0)
+  const totalBookings = business.experiences.reduce((sum, exp) =>
+    sum + exp.events.reduce((eventSum, event) =>
+      eventSum + event.sessions.reduce((sessionSum, session) => sessionSum + session.bookings.length, 0), 0), 0)
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="bg-white shadow">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">{business.name}</h1>
+              <p className="text-gray-600">Welcome back, {session.user.firstName}</p>
+            </div>
+            <div className="text-sm text-gray-500">
+              Role: {session.user.role}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white p-6 rounded-lg shadow">
+            <h3 className="text-lg font-medium text-gray-900">Experiences</h3>
+            <p className="text-3xl font-bold text-blue-600">{totalExperiences}</p>
+          </div>
+
+          <div className="bg-white p-6 rounded-lg shadow">
+            <h3 className="text-lg font-medium text-gray-900">Events</h3>
+            <p className="text-3xl font-bold text-green-600">{totalEvents}</p>
+          </div>
+
+          <div className="bg-white p-6 rounded-lg shadow">
+            <h3 className="text-lg font-medium text-gray-900">Sessions</h3>
+            <p className="text-3xl font-bold text-purple-600">{totalSessions}</p>
+          </div>
+
+          <div className="bg-white p-6 rounded-lg shadow">
+            <h3 className="text-lg font-medium text-gray-900">Bookings</h3>
+            <p className="text-3xl font-bold text-orange-600">{totalBookings}</p>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h2 className="text-xl font-semibold text-gray-900">Recent Experiences</h2>
+          </div>
+          <div className="p-6">
+            {business.experiences.length > 0 ? (
+              <div className="space-y-4">
+                {business.experiences.map((experience) => (
+                  <div key={experience.id} className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="font-medium text-gray-900">{experience.name}</h3>
+                        <p className="text-gray-600 text-sm">{experience.description}</p>
+                        <div className="mt-2 space-x-4 text-sm text-gray-500">
+                          <span>Duration: {experience.duration} minutes</span>
+                          <span>Max Capacity: {experience.maxCapacity}</span>
+                          <span>Base Price: ${experience.basePrice}</span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm text-gray-500">
+                          {experience.events.length} event(s)
+                        </div>
+                        <div className={`inline-flex px-2 py-1 text-xs rounded-full ${
+                          experience.isActive
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-gray-100 text-gray-800'
+                        }`}>
+                          {experience.isActive ? 'Active' : 'Inactive'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500 text-center py-8">
+                No experiences created yet. Start by creating your first experience!
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 }

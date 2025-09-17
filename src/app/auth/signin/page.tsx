@@ -1,33 +1,22 @@
 'use client'
 
-import { useState, Suspense } from 'react'
+import { useState } from 'react'
 import { signIn, getSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import Link from 'next/link'
 
-function SignInForm() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const callbackUrl = searchParams.get('callbackUrl') || '/'
-
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  })
+export default function SignInPage() {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }))
-    setError('')
-  }
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const from = searchParams.get('from') || '/dashboard'
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -36,112 +25,87 @@ function SignInForm() {
 
     try {
       const result = await signIn('credentials', {
-        email: formData.email,
-        password: formData.password,
-        redirect: false,
+        email,
+        password,
+        redirect: false
       })
 
       if (result?.error) {
         setError('Invalid email or password')
       } else {
-        // Get the session to check user role
-        const session = await getSession()
-        console.log('Session after login:', session)
-
-        if (session?.user?.role === 'BUSINESS_OWNER') {
-          console.log('Redirecting to dashboard')
-          router.push('/dashboard')
-        } else {
-          console.log('Redirecting to:', callbackUrl)
-          router.push(callbackUrl)
-        }
+        // Wait for session to be updated
+        await new Promise(resolve => setTimeout(resolve, 100))
+        router.push(from)
+        router.refresh()
       }
     } catch (error) {
-      console.error('Sign in error:', error)
-      setError('An error occurred during sign in')
+      setError('An unexpected error occurred')
     } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900">TicketUp</h1>
-          <p className="mt-2 text-gray-600">Sign in to your account</p>
-        </div>
-
         <Card>
-          <CardHeader>
-            <CardTitle>Welcome back</CardTitle>
+          <CardHeader className="text-center">
+            <CardTitle className="text-3xl font-bold">Sign In</CardTitle>
             <CardDescription>
-              Enter your credentials to access your account
+              Sign in to your business account
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-6">
               {error && (
-                <div className="p-3 bg-red-100 border border-red-200 text-red-700 rounded-md text-sm">
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
                   {error}
                 </div>
               )}
 
-              <div>
-                <Label htmlFor="email">Email address</Label>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
                   type="email"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
-                  className="mt-1"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
-                  autoComplete="email"
+                  placeholder="owner@funbox.com"
                 />
               </div>
 
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
                 <Input
                   id="password"
                   type="password"
-                  value={formData.password}
-                  onChange={(e) => handleInputChange('password', e.target.value)}
-                  className="mt-1"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   required
-                  autoComplete="current-password"
+                  placeholder="password123"
                 />
               </div>
 
               <Button
                 type="submit"
-                disabled={isLoading}
                 className="w-full"
+                disabled={isLoading}
               >
-                {isLoading ? 'Signing in...' : 'Sign in'}
+                {isLoading ? 'Signing in...' : 'Sign In'}
               </Button>
             </form>
 
-
-            {/* Test Credentials */}
-            <div className="mt-6 p-3 bg-blue-50 border border-blue-200 rounded-md">
-              <p className="text-sm font-medium text-blue-800 mb-1">Test Credentials:</p>
-              <p className="text-xs text-blue-700">
-                Email: owner@funbox.com<br />
-                Password: password123
-              </p>
+            <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+              <h4 className="font-medium text-blue-900 mb-2">Test Accounts:</h4>
+              <div className="text-sm text-blue-700 space-y-1">
+                <div><strong>Owner:</strong> owner@funbox.com / password123</div>
+                <div><strong>Employee:</strong> employee@funbox.com / password123</div>
+              </div>
             </div>
           </CardContent>
         </Card>
       </div>
     </div>
-  )
-}
-
-export default function SignInPage() {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <SignInForm />
-    </Suspense>
   )
 }

@@ -1,18 +1,9 @@
-import { NextAuthOptions, User } from 'next-auth'
-import { PrismaAdapter } from '@auth/prisma-adapter'
+import { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
-import { prisma } from './prisma'
 import bcrypt from 'bcryptjs'
-import { UserRole } from '@prisma/client'
-
-interface CustomUser extends User {
-  role: UserRole
-  businessId?: string
-}
+import { prisma } from './prisma'
 
 export const authOptions: NextAuthOptions = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  adapter: PrismaAdapter(prisma) as any,
   providers: [
     CredentialsProvider({
       name: 'credentials',
@@ -22,91 +13,66 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          console.log('Missing credentials')
           return null
         }
 
         const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
+          where: {
+            email: credentials.email
+          },
           include: {
-            businesses: true
+            business: true
           }
         })
 
-        console.log('Found user:', !!user, 'Has password:', !!user?.passwordHash)
-
-        if (!user || !user.passwordHash) {
-          console.log('User not found or no password hash')
+        if (!user) {
           return null
         }
 
-        const passwordMatch = await bcrypt.compare(
+        const isPasswordValid = await bcrypt.compare(
           credentials.password,
-          user.passwordHash
+          user.password
         )
 
-        console.log('Password match:', passwordMatch)
-
-        if (!passwordMatch) {
-          console.log('Password does not match')
+        if (!isPasswordValid) {
           return null
         }
 
         return {
           id: user.id,
           email: user.email,
-          name: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
           role: user.role,
-          businessId: user.businesses?.[0]?.id || null,
+          businessId: user.businessId,
+          businessSlug: user.business?.slug
         }
       }
     })
   ],
   session: {
-    strategy: 'jwt',
+    strategy: 'jwt'
   },
   callbacks: {
     async jwt({ token, user }) {
-      console.log('JWT callback - user:', user)
-      console.log('JWT callback - token before:', token)
-
       if (user) {
-        const customUser = user as CustomUser
-        token.role = customUser.role
-        token.businessId = customUser.businessId
+        token.role = user.role
+        token.businessId = user.businessId
+        token.businessSlug = user.businessSlug
       }
-
-      console.log('JWT callback - token after:', token)
       return token
     },
     async session({ session, token }) {
-      console.log('Session callback - token:', token)
-      console.log('Session callback - session before:', session)
-
-      if (session?.user && token?.sub) {
-        session.user.id = token.sub
-        Object.assign(session.user, {
-          role: token.role,
-          businessId: token.businessId
-        })
+      if (token) {
+        session.user.id = token.sub!
+        session.user.role = token.role as string
+        session.user.businessId = token.businessId as string
+        session.user.businessSlug = token.businessSlug as string
       }
-
-      console.log('Session callback - session after:', session)
       return session
-    },
-    async signIn() {
-      return true
-    },
-    async redirect({ url, baseUrl }) {
-      // If user is signing in, check their role and redirect accordingly
-      if (url.startsWith(baseUrl)) {
-        return url
-      }
-      // Default redirect to base URL
-      return baseUrl
     }
   },
   pages: {
-    signIn: '/auth/signin',
-  },
+    signIn: '/auth/signin'
+  }
 }

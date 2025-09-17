@@ -1,267 +1,274 @@
-import { PrismaClient, UserRole } from '@prisma/client'
+import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
 
 async function main() {
-  // Create admin user
-  const adminPassword = await bcrypt.hash('admin123', 12)
-  await prisma.user.upsert({
-    where: { email: 'admin@funbox.com' },
+  console.log('🌱 Seeding database...')
+
+  // Create test business
+  const business = await prisma.business.upsert({
+    where: { slug: 'funbox' },
     update: {},
     create: {
-      email: 'admin@funbox.com',
-      firstName: 'Admin',
-      lastName: 'User',
-      role: UserRole.ADMIN,
-      passwordHash: adminPassword,
-      emailVerified: new Date(),
-    },
+      name: 'Funbox Entertainment',
+      slug: 'funbox',
+      description: 'Premium entertainment experiences for all ages'
+    }
   })
 
+  console.log(`Created business: ${business.name}`)
+
   // Create business owner
-  const ownerPassword = await bcrypt.hash('owner123', 12)
+  const hashedPassword = await bcrypt.hash('password123', 10)
   const owner = await prisma.user.upsert({
     where: { email: 'owner@funbox.com' },
     update: {},
     create: {
       email: 'owner@funbox.com',
-      firstName: 'Business',
-      lastName: 'Owner',
-      role: UserRole.BUSINESS_OWNER,
-      passwordHash: ownerPassword,
-      emailVerified: new Date(),
-    },
+      firstName: 'Bob',
+      lastName: 'Smith',
+      password: hashedPassword,
+      role: 'OWNER',
+      businessId: business.id
+    }
   })
 
-  // Create Funbox business
-  const funbox = await prisma.business.upsert({
-    where: { slug: 'funbox' },
+  console.log(`Created owner: ${owner.email}`)
+
+  // Create employee
+  const employee = await prisma.user.upsert({
+    where: { email: 'employee@funbox.com' },
     update: {},
     create: {
-      name: 'Funbox',
-      slug: 'funbox',
-      description: 'Houston\'s biggest bounce park!',
-      email: 'info@funbox.com',
-      phone: '+1-555-123-4567',
-      address: '123 Bounce Street, Houston, TX 77001',
-      website: 'https://funbox.com',
-      logoUrl: '/funbox-logo.png',
-      primaryColor: '#ff6b9d',
-      timezone: 'America/Chicago',
-      currency: 'USD',
-      ownerId: owner.id,
-    },
+      email: 'employee@funbox.com',
+      firstName: 'Sarah',
+      lastName: 'Johnson',
+      password: hashedPassword,
+      role: 'EMPLOYEE',
+      businessId: business.id
+    }
   })
 
-  // Create bounce park experience
-  const bounceExperience = await prisma.experience.upsert({
+  console.log(`Created employee: ${employee.email}`)
+
+  // Create experiences
+  const escapeRoom = await prisma.experience.upsert({
     where: {
       businessId_slug: {
-        businessId: funbox.id,
-        slug: 'bounce-park'
+        businessId: business.id,
+        slug: 'escape-room'
       }
     },
     update: {},
     create: {
-      name: 'Bounce Park',
-      slug: 'bounce-park',
-      description: 'Ultimate bouncing experience with climbing and sliding',
-      imageUrl: '/bounce-park.jpg',
-      businessId: funbox.id,
-    },
+      name: 'Mystery Escape Room',
+      slug: 'escape-room',
+      description: 'Test your wits in our challenging escape room experience',
+      basePrice: 35.00,
+      duration: 60,
+      maxCapacity: 8,
+      businessId: business.id
+    }
   })
 
-  // Create Access Pass product
-  const accessPass = await prisma.product.upsert({
+  const laserTag = await prisma.experience.upsert({
     where: {
-      experienceId_slug: {
-        experienceId: bounceExperience.id,
-        slug: 'access-pass-90min'
+      businessId_slug: {
+        businessId: business.id,
+        slug: 'laser-tag'
       }
     },
     update: {},
     create: {
-      name: 'Funbox Access Pass (90-Min)',
-      slug: 'access-pass-90min',
-      description: '90 minutes of bouncing, climbing, & sliding at Houston\'s biggest bounce park! Plus, an arcade for all ages and toddler soft play!',
-      imageUrl: '/access-pass.jpg',
-      basePrice: 19.00,
-      duration: 90,
-      maxCapacity: 50,
-      experienceId: bounceExperience.id,
-    },
-  })
-
-  // Create Family Fun Pack product
-  const familyPack = await prisma.product.upsert({
-    where: {
-      experienceId_slug: {
-        experienceId: bounceExperience.id,
-        slug: 'family-fun-pack'
-      }
-    },
-    update: {},
-    create: {
-      name: 'Family Fun Pack: 4+ Guests [Save 15%]',
-      slug: 'family-fun-pack',
-      description: 'Have a family of four or more?! Save $ AND bounce, play, & make unforgettable memories together!',
-      imageUrl: '/family-pack.jpg',
-      basePrice: 64.60, // 4 * 19 * 0.85
-      duration: 90,
-      maxCapacity: 20,
-      experienceId: bounceExperience.id,
-    },
-  })
-
-  // Create Birthday Tour product
-  await prisma.product.upsert({
-    where: {
-      experienceId_slug: {
-        experienceId: bounceExperience.id,
-        slug: 'birthday-tour'
-      }
-    },
-    update: {},
-    create: {
-      name: 'Free Birthday Tour: Check Out the Best Party Rooms in Houston! 🎂',
-      slug: 'birthday-tour',
-      description: 'Take a free tour of Funbox 🎉 See our birthday rooms & learn about packages before you book!',
-      imageUrl: '/birthday-tour.jpg',
-      basePrice: 0.00,
+      name: 'Laser Tag Arena',
+      slug: 'laser-tag',
+      description: 'High-tech laser tag battles in our futuristic arena',
+      basePrice: 25.00,
       duration: 30,
-      maxCapacity: 10,
-      experienceId: bounceExperience.id,
-    },
+      maxCapacity: 12,
+      businessId: business.id
+    }
   })
 
-  // Create ticket types for Access Pass
-  await prisma.ticketType.createMany({
-    data: [
-      {
-        name: 'Bounce Pass (ages 6 & over)',
-        price: 19.00,
-        minAge: 6,
-        productId: accessPass.id,
-        sortOrder: 1,
-      },
-      {
-        name: 'Ages 3-5 (with purchase of Bounce Pass)',
-        price: 14.00,
-        minAge: 3,
-        maxAge: 5,
-        requiresTicketTypeId: null, // We'll update this after creating the first ticket type
-        productId: accessPass.id,
-        sortOrder: 2,
-      },
-      {
-        name: 'Under 3 (free with purchase of Bounce Pass)',
-        price: 0.00,
-        maxAge: 2,
-        requiresTicketTypeId: null, // We'll update this after creating the first ticket type
-        productId: accessPass.id,
-        sortOrder: 3,
-      },
-      {
-        name: 'Non-Jumper',
-        price: 0.00,
-        productId: accessPass.id,
-        sortOrder: 4,
-      },
-    ],
-    skipDuplicates: true,
+  console.log(`Created experiences: ${escapeRoom.name}, ${laserTag.name}`)
+
+  // Create events
+  const today = new Date()
+  const tomorrow = new Date(today)
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  const nextWeek = new Date(today)
+  nextWeek.setDate(nextWeek.getDate() + 7)
+
+  const escapeEvent = await prisma.event.create({
+    data: {
+      name: 'Weekend Mystery Challenge',
+      description: 'Special weekend event with bonus puzzles',
+      startDate: tomorrow,
+      endDate: nextWeek,
+      experienceId: escapeRoom.id
+    }
   })
+
+  const laserEvent = await prisma.event.create({
+    data: {
+      name: 'Battle Royale Tournament',
+      description: 'Competitive laser tag tournament',
+      startDate: tomorrow,
+      endDate: nextWeek,
+      experienceId: laserTag.id
+    }
+  })
+
+  console.log(`Created events: ${escapeEvent.name}, ${laserEvent.name}`)
+
+  // Create sessions for escape room
+  const sessions = []
+  for (let i = 0; i < 3; i++) {
+    const sessionDate = new Date(tomorrow)
+    sessionDate.setDate(sessionDate.getDate() + i)
+
+    // Create 3 sessions per day (2pm, 4pm, 6pm)
+    for (const hour of [14, 16, 18]) {
+      const startTime = new Date(sessionDate)
+      startTime.setHours(hour, 0, 0, 0)
+      const endTime = new Date(startTime)
+      endTime.setHours(hour + 1, 0, 0, 0)
+
+      sessions.push({
+        startTime,
+        endTime,
+        eventId: escapeEvent.id
+      })
+    }
+  }
+
+  await prisma.session.createMany({ data: sessions })
+
+  // Create sessions for laser tag
+  const laserSessions = []
+  for (let i = 0; i < 3; i++) {
+    const sessionDate = new Date(tomorrow)
+    sessionDate.setDate(sessionDate.getDate() + i)
+
+    // Create 4 sessions per day (1pm, 2:30pm, 4pm, 5:30pm)
+    for (const [hour, minute] of [[13, 0], [14, 30], [16, 0], [17, 30]]) {
+      const startTime = new Date(sessionDate)
+      startTime.setHours(hour, minute, 0, 0)
+      const endTime = new Date(startTime)
+      endTime.setMinutes(endTime.getMinutes() + 30)
+
+      laserSessions.push({
+        startTime,
+        endTime,
+        eventId: laserEvent.id
+      })
+    }
+  }
+
+  await prisma.session.createMany({ data: laserSessions })
+
+  console.log(`Created ${sessions.length + laserSessions.length} sessions`)
 
   // Create add-ons
   await prisma.addOn.createMany({
     data: [
       {
-        name: 'Funbox Grippy Socks',
-        description: 'All bouncers must wear Funbox Grippy Socks (add yours below 🧦).',
-        price: 3.95,
-        isRequired: true,
-        imageUrl: '/grippy-socks.jpg',
-        productId: accessPass.id,
-        sortOrder: 1,
+        name: 'Photo Package',
+        description: 'Professional photos of your escape room experience',
+        price: 15.00,
+        eventId: escapeEvent.id
       },
       {
-        name: 'Funbox Grippy Socks',
-        description: 'All bouncers must wear Funbox Grippy Socks (add yours below 🧦).',
-        price: 3.95,
-        isRequired: true,
-        imageUrl: '/grippy-socks.jpg',
-        productId: familyPack.id,
-        sortOrder: 1,
+        name: 'Hint Package',
+        description: 'Extra hints to help solve the puzzles',
+        price: 5.00,
+        eventId: escapeEvent.id
       },
-    ],
-    skipDuplicates: true,
+      {
+        name: 'Victory Celebration',
+        description: 'Champagne toast for successful teams',
+        price: 20.00,
+        eventId: escapeEvent.id
+      },
+      {
+        name: 'Laser Vest Upgrade',
+        description: 'Premium vest with better accuracy',
+        price: 10.00,
+        eventId: laserEvent.id
+      },
+      {
+        name: 'Team Photo',
+        description: 'Group photo after the battle',
+        price: 12.00,
+        eventId: laserEvent.id
+      }
+    ]
   })
 
-  // Create some sample sessions for today and tomorrow
-  const today = new Date()
-  today.setHours(14, 0, 0, 0) // 2 PM
+  console.log('Created add-ons')
 
-  const sessions = []
-  for (let i = 0; i < 8; i++) {
-    const startTime = new Date(today)
-    startTime.setMinutes(i * 15) // 2:00, 2:15, 2:30, 2:45, 3:00, 3:15, 3:30, 3:45
+  // Create sample guests and bookings
+  const guest1 = await prisma.guest.create({
+    data: {
+      firstName: 'John',
+      lastName: 'Doe',
+      email: 'john.doe@email.com',
+      phone: '555-0123'
+    }
+  })
 
-    const endTime = new Date(startTime)
-    endTime.setMinutes(endTime.getMinutes() + 90)
+  const guest2 = await prisma.guest.create({
+    data: {
+      firstName: 'Jane',
+      lastName: 'Smith',
+      email: 'jane.smith@email.com',
+      phone: '555-0456'
+    }
+  })
 
-    sessions.push({
-      startTime,
-      endTime,
-      maxCapacity: 50,
-      bookedCapacity: Math.floor(Math.random() * 20), // Random bookings
-      productId: accessPass.id,
+  // Create sample bookings
+  const firstSession = await prisma.session.findFirst({
+    where: { eventId: escapeEvent.id }
+  })
+
+  if (firstSession) {
+    await prisma.booking.create({
+      data: {
+        sessionId: firstSession.id,
+        guestId: guest1.id,
+        quantity: 4,
+        total: 140.00,
+        status: 'CONFIRMED',
+        items: {
+          create: [
+            {
+              quantity: 4,
+              unitPrice: 35.00,
+              totalPrice: 140.00,
+              itemType: 'SESSION'
+            }
+          ]
+        }
+      }
+    })
+
+    await prisma.session.update({
+      where: { id: firstSession.id },
+      data: { currentCount: 4 }
     })
   }
 
-  await prisma.session_Product.createMany({
-    data: sessions,
-    skipDuplicates: true,
-  })
-
-  // Create discount codes
-  await prisma.discountCode.createMany({
-    data: [
-      {
-        code: 'SAVE10',
-        description: '10% off your booking',
-        discountType: 'PERCENTAGE',
-        discountValue: 10.00,
-        validFrom: new Date(),
-        validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
-        maxUses: 100,
-        businessId: funbox.id,
-      },
-      {
-        code: 'WELCOME15',
-        description: '$15 off orders over $50',
-        discountType: 'FIXED_AMOUNT',
-        discountValue: 15.00,
-        minOrderAmount: 50.00,
-        validFrom: new Date(),
-        validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
-        maxUses: 50,
-        businessId: funbox.id,
-      },
-    ],
-    skipDuplicates: true,
-  })
-
-  console.log('✅ Seed data created successfully!')
-  console.log('📧 Admin login: admin@funbox.com / admin123')
-  console.log('👤 Owner login: owner@funbox.com / owner123')
-  console.log('🏢 Business: http://localhost:3000/funbox')
+  console.log('Created sample bookings')
+  console.log('✅ Seeding completed!')
 }
 
 main()
-  .catch((e) => {
-    console.error(e)
-    process.exit(1)
-  })
-  .finally(async () => {
+  .then(async () => {
     await prisma.$disconnect()
+  })
+  .catch(async (e) => {
+    console.error(e)
+    await prisma.$disconnect()
+    process.exit(1)
   })

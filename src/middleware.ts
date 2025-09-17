@@ -1,61 +1,37 @@
 import { withAuth } from 'next-auth/middleware'
+import { NextResponse } from 'next/server'
 
 export default withAuth(
-  function middleware() {
-    // Additional middleware logic can go here
+  function middleware(req) {
+    const token = req.nextauth.token
+    const isAuth = !!token
+    const isAuthPage = req.nextUrl.pathname.startsWith('/auth')
+    const isDashboard = req.nextUrl.pathname.startsWith('/dashboard')
+
+    if (isAuthPage) {
+      if (isAuth) {
+        return NextResponse.redirect(new URL('/dashboard', req.url))
+      }
+      return null
+    }
+
+    if (isDashboard && !isAuth) {
+      let from = req.nextUrl.pathname
+      if (req.nextUrl.search) {
+        from += req.nextUrl.search
+      }
+      return NextResponse.redirect(
+        new URL(`/auth/signin?from=${encodeURIComponent(from)}`, req.url)
+      )
+    }
   },
   {
     callbacks: {
-      authorized: ({ token, req }) => {
-        const { pathname } = req.nextUrl
-
-        // Public routes that don't require authentication
-        if (
-          pathname.startsWith('/auth') ||
-          pathname.startsWith('/api/auth') ||
-          pathname === '/' ||
-          pathname.startsWith('/embed') ||
-          pathname.startsWith('/widget') ||
-          pathname.includes('/_next') ||
-          pathname.includes('/favicon') ||
-          // Allow business booking pages to be public
-          /^\/[^\/]+$/.test(pathname) || // /businessSlug
-          /^\/[^\/]+\/book/.test(pathname) // /businessSlug/book/*
-        ) {
-          return true
-        }
-
-        // API routes protection
-        if (pathname.startsWith('/api/')) {
-          return !!token
-        }
-
-        // Dashboard routes - require business owner or admin
-        if (pathname.startsWith('/dashboard')) {
-          return token?.role === 'BUSINESS_OWNER' || token?.role === 'ADMIN'
-        }
-
-        // Admin routes - require admin role
-        if (pathname.startsWith('/admin')) {
-          return token?.role === 'ADMIN'
-        }
-
-        // Default: allow public access for booking flows
-        return true
-      },
-    },
+      authorized: () => true
+    }
   }
 )
 
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public files
-     */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.png$|.*\\.jpg$|.*\\.jpeg$|.*\\.gif$|.*\\.svg$|.*\\.ico$).*)',
-  ],
+  matcher: ['/dashboard/:path*', '/auth/:path*']
 }
