@@ -127,8 +127,8 @@ function SignInForm() {
             <div className="mt-6 p-3 bg-blue-50 border border-blue-200 rounded-md">
               <p className="text-sm font-medium text-blue-800 mb-1">Test Credentials:</p>
               <p className="text-xs text-blue-700">
-                Email: admin@funbox.com<br />
-                Password: admin123
+                Email: owner@funbox.com<br />
+                Password: password123
               </p>
             </div>
           </CardContent>
