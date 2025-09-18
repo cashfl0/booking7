@@ -39,7 +39,7 @@ const navigation: NavigationItem[] = [
     ]
   },
   { name: 'Bookings', href: '/dashboard/bookings', icon: Calendar },
-  { name: 'Customers', href: '/dashboard/customers', icon: Users },
+  { name: 'Guests', href: '/dashboard/guests', icon: Users },
   { name: 'Reports', href: '/dashboard/reports', icon: BarChart3 },
   { name: 'Marketing', href: '/dashboard/marketing', icon: Megaphone },
   { name: 'Settings', href: '/dashboard/settings', icon: Settings },
