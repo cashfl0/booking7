@@ -100,7 +100,16 @@ export default function EventsPage() {
       } else {
         const error = await response.json()
         console.error('Error creating event:', error)
-        alert(`Error creating event: ${error.error || 'Unknown error'}`)
+
+        let errorMessage = error.error || 'Unknown error'
+        if (error.details && Array.isArray(error.details)) {
+          const validationErrors = error.details.map((detail: { path?: string[]; message: string }) =>
+            `${detail.path?.join('.')}: ${detail.message}`
+          ).join('\n')
+          errorMessage = `Validation error:\n${validationErrors}`
+        }
+
+        alert(`Error creating event:\n${errorMessage}`)
       }
     } catch (error) {
       console.error('Error creating event:', error)
@@ -126,6 +135,16 @@ export default function EventsPage() {
       } else {
         const error = await response.json()
         console.error('Error updating event:', error)
+
+        let errorMessage = error.error || 'Unknown error'
+        if (error.details && Array.isArray(error.details)) {
+          const validationErrors = error.details.map((detail: { path?: string[]; message: string }) =>
+            `${detail.path?.join('.')}: ${detail.message}`
+          ).join('\n')
+          errorMessage = `Validation error:\n${validationErrors}`
+        }
+
+        alert(`Error updating event:\n${errorMessage}`)
       }
     } catch (error) {
       console.error('Error updating event:', error)

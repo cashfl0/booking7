@@ -1,7 +1,7 @@
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { redirect } from 'next/navigation'
-import { DashboardSidebar } from '@/components/dashboard/sidebar'
+import { MobileDashboard } from '@/components/dashboard/mobile-dashboard'
 
 export default async function DashboardLayout({
   children,
@@ -14,12 +14,5 @@ export default async function DashboardLayout({
     redirect('/auth/signin')
   }
 
-  return (
-    <div className="flex h-screen bg-gray-100">
-      <DashboardSidebar />
-      <main className="flex-1 overflow-auto">
-        {children}
-      </main>
-    </div>
-  )
+  return <MobileDashboard>{children}</MobileDashboard>
 }
