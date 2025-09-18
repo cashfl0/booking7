@@ -6,7 +6,7 @@ import { z } from 'zod'
 
 const eventSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100),
-  description: z.string().optional(),
+  description: z.string().optional().or(z.literal('')),
   startDate: z.string().refine((date) => !isNaN(Date.parse(date)), 'Invalid start date'),
   endDate: z.string().refine((date) => !isNaN(Date.parse(date)), 'Invalid end date'),
   experienceId: z.string().min(1, 'Experience is required'),
@@ -30,7 +30,10 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const experienceId = searchParams.get('experienceId')
 
-    const whereClause: any = {
+    const whereClause: {
+      experience: { businessId: string }
+      experienceId?: string
+    } = {
       experience: {
         businessId: session.user.businessId
       }
@@ -119,7 +122,7 @@ export async function POST(request: NextRequest) {
     // Create sessions if session times and days are provided
     if (validatedData.sessionTimes && validatedData.selectedDays) {
       const sessions = []
-      const dayMap = {
+      const dayMap: Record<string, number> = {
         'sunday': 0,
         'monday': 1,
         'tuesday': 2,
@@ -164,7 +167,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(event, { status: 201 })
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Validation error', details: error.errors }, { status: 400 })
+      return NextResponse.json({ error: 'Validation error', details: error.issues }, { status: 400 })
     }
 
     console.error('Error creating event:', error)

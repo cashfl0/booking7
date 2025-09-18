@@ -18,7 +18,7 @@ interface Experience {
 
 interface ExperienceFormProps {
   experience?: Experience
-  onSubmit: (data: Omit<Experience, 'id'>) => Promise<void>
+  onSubmit: (data: Omit<Experience, 'id' | 'slug' | 'sortOrder' | 'events'>) => Promise<void>
   onCancel: () => void
   isLoading?: boolean
 }

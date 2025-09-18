@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Edit, Trash2, CalendarDays, Clock } from 'lucide-react'
+import { Plus, Edit, Trash2, CalendarDays } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select } from '@/components/ui/select'
@@ -77,7 +77,7 @@ export default function EventsPage() {
 
   useEffect(() => {
     fetchExperiences()
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (selectedExperienceId) {
@@ -85,7 +85,7 @@ export default function EventsPage() {
     }
   }, [selectedExperienceId])
 
-  const handleCreateEvent = async (data: Omit<Event, 'id' | 'sessions'> & { sessionTimes: any[], selectedDays: string[] }) => {
+  const handleCreateEvent = async (data: Omit<Event, 'id' | 'sessions'> & { sessionTimes: { id: string, time: string }[], selectedDays: string[] }) => {
     setSubmitting(true)
     try {
       const response = await fetch('/api/events', {
@@ -100,6 +100,7 @@ export default function EventsPage() {
       } else {
         const error = await response.json()
         console.error('Error creating event:', error)
+        alert(`Error creating event: ${error.error || 'Unknown error'}`)
       }
     } catch (error) {
       console.error('Error creating event:', error)
@@ -108,7 +109,7 @@ export default function EventsPage() {
     }
   }
 
-  const handleEditEvent = async (data: Omit<Event, 'id' | 'sessions'> & { sessionTimes: any[], selectedDays: string[] }) => {
+  const handleEditEvent = async (data: Omit<Event, 'id' | 'sessions'> & { sessionTimes: { id: string, time: string }[], selectedDays: string[] }) => {
     if (!editingEvent) return
 
     setSubmitting(true)
@@ -222,7 +223,7 @@ export default function EventsPage() {
       {selectedExperienceId && (
         <div>
           <div className="flex items-center gap-2 mb-6">
-            <h2 className="text-xl font-semibold">Events for "{selectedExperience?.name}"</h2>
+            <h2 className="text-xl font-semibold">Events for &quot;{selectedExperience?.name}&quot;</h2>
             {eventsLoading && <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>}
           </div>
 

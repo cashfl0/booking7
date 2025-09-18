@@ -52,6 +52,36 @@ async function main() {
 
   console.log(`Created employee: ${employee.email}`)
 
+  // Create Ben's separate business
+  const benBusiness = await prisma.business.upsert({
+    where: { slug: 'dark-helmets-apocalypse' },
+    update: {},
+    create: {
+      name: "Dark Helmet's Apocalypse",
+      slug: 'dark-helmets-apocalypse',
+      description: 'The ultimate apocalyptic adventure experiences'
+    }
+  })
+
+  console.log(`Created Ben's business: ${benBusiness.name}`)
+
+  // Create test user Ben with his own business
+  const benPassword = await bcrypt.hash('ben', 10)
+  const ben = await prisma.user.upsert({
+    where: { email: 'benwaters81@gmail.com' },
+    update: {},
+    create: {
+      email: 'benwaters81@gmail.com',
+      firstName: 'Ben',
+      lastName: 'Waters',
+      password: benPassword,
+      role: 'OWNER',
+      businessId: benBusiness.id
+    }
+  })
+
+  console.log(`Created test user: ${ben.email}`)
+
   // Create experiences
   const escapeRoom = await prisma.experience.upsert({
     where: {

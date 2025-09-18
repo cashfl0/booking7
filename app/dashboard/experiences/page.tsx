@@ -43,7 +43,7 @@ export default function ExperiencesPage() {
     }
   }
 
-  const handleCreateExperience = async (data: Omit<Experience, 'id' | 'events'>) => {
+  const handleCreateExperience = async (data: Omit<Experience, 'id' | 'slug' | 'sortOrder' | 'events'>) => {
     setSubmitting(true)
     try {
       const response = await fetch('/api/experiences', {
@@ -66,7 +66,7 @@ export default function ExperiencesPage() {
     }
   }
 
-  const handleEditExperience = async (data: Omit<Experience, 'id' | 'events'>) => {
+  const handleEditExperience = async (data: Omit<Experience, 'id' | 'slug' | 'sortOrder' | 'events'>) => {
     if (!editingExperience) return
 
     setSubmitting(true)

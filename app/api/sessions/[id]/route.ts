@@ -13,8 +13,9 @@ const sessionSchema = z.object({
 // GET single session
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   try {
     const session = await getServerSession(authOptions)
 
@@ -24,7 +25,7 @@ export async function GET(
 
     const sessionRecord = await prisma.session.findFirst({
       where: {
-        id: params.id,
+        id: id,
         event: {
           experience: {
             businessId: session.user.businessId
@@ -66,8 +67,9 @@ export async function GET(
 // PUT update session
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   try {
     const session = await getServerSession(authOptions)
 
@@ -78,7 +80,7 @@ export async function PUT(
     // Verify session belongs to user's business
     const existingSession = await prisma.session.findFirst({
       where: {
-        id: params.id,
+        id: id,
         event: {
           experience: {
             businessId: session.user.businessId
@@ -128,7 +130,7 @@ export async function PUT(
     }
 
     const updatedSession = await prisma.session.update({
-      where: { id: params.id },
+      where: { id: id },
       data: {
         startTime: startTime,
         endTime: endTime,
@@ -153,7 +155,7 @@ export async function PUT(
     return NextResponse.json(updatedSession)
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Validation error', details: error.errors }, { status: 400 })
+      return NextResponse.json({ error: 'Validation error', details: error.issues }, { status: 400 })
     }
 
     console.error('Error updating session:', error)
@@ -164,8 +166,9 @@ export async function PUT(
 // DELETE session
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   try {
     const session = await getServerSession(authOptions)
 
@@ -176,7 +179,7 @@ export async function DELETE(
     // Verify session belongs to user's business and check for bookings
     const sessionRecord = await prisma.session.findFirst({
       where: {
-        id: params.id,
+        id: id,
         event: {
           experience: {
             businessId: session.user.businessId
@@ -201,7 +204,7 @@ export async function DELETE(
     }
 
     await prisma.session.delete({
-      where: { id: params.id }
+      where: { id: id }
     })
 
     return NextResponse.json({ message: 'Session deleted successfully' })

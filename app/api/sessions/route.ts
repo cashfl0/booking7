@@ -22,7 +22,10 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const eventId = searchParams.get('eventId')
 
-    const whereClause: any = {
+    const whereClause: {
+      event: { experience: { businessId: string } }
+      eventId?: string
+    } = {
       event: {
         experience: {
           businessId: session.user.businessId
@@ -119,7 +122,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(newSession, { status: 201 })
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Validation error', details: error.errors }, { status: 400 })
+      return NextResponse.json({ error: 'Validation error', details: error.issues }, { status: 400 })
     }
 
     console.error('Error creating session:', error)

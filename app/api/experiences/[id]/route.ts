@@ -16,8 +16,9 @@ const experienceSchema = z.object({
 // GET single experience
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   try {
     const session = await getServerSession(authOptions)
 
@@ -27,7 +28,7 @@ export async function GET(
 
     const experience = await prisma.experience.findFirst({
       where: {
-        id: params.id,
+        id: id,
         businessId: session.user.businessId
       },
       include: {
@@ -54,8 +55,9 @@ export async function GET(
 // PUT update experience
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   try {
     const session = await getServerSession(authOptions)
 
@@ -66,7 +68,7 @@ export async function PUT(
     // Verify experience belongs to user's business
     const existingExperience = await prisma.experience.findFirst({
       where: {
-        id: params.id,
+        id: id,
         businessId: session.user.businessId
       }
     })
@@ -97,13 +99,13 @@ export async function PUT(
         }
       })
 
-      if (conflictingExperience && conflictingExperience.id !== params.id) {
+      if (conflictingExperience && conflictingExperience.id !== id) {
         return NextResponse.json({ error: 'An experience with this name already exists' }, { status: 400 })
       }
     }
 
     const experience = await prisma.experience.update({
-      where: { id: params.id },
+      where: { id: id },
       data: {
         ...validatedData,
         slug
@@ -113,7 +115,7 @@ export async function PUT(
     return NextResponse.json(experience)
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Validation error', details: error.errors }, { status: 400 })
+      return NextResponse.json({ error: 'Validation error', details: error.issues }, { status: 400 })
     }
 
     console.error('Error updating experience:', error)
@@ -124,8 +126,9 @@ export async function PUT(
 // DELETE experience
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   try {
     const session = await getServerSession(authOptions)
 
@@ -136,7 +139,7 @@ export async function DELETE(
     // Verify experience belongs to user's business
     const experience = await prisma.experience.findFirst({
       where: {
-        id: params.id,
+        id: id,
         businessId: session.user.businessId
       },
       include: {
@@ -169,7 +172,7 @@ export async function DELETE(
     }
 
     await prisma.experience.delete({
-      where: { id: params.id }
+      where: { id: id }
     })
 
     return NextResponse.json({ message: 'Experience deleted successfully' })

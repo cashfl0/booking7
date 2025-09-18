@@ -6,7 +6,7 @@ import { z } from 'zod'
 
 const eventSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100),
-  description: z.string().optional(),
+  description: z.string().optional().or(z.literal('')),
   startDate: z.string().refine((date) => !isNaN(Date.parse(date)), 'Invalid start date'),
   endDate: z.string().refine((date) => !isNaN(Date.parse(date)), 'Invalid end date'),
   experienceId: z.string().min(1, 'Experience is required'),
@@ -21,8 +21,9 @@ const eventSchema = z.object({
 // GET single event
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   try {
     const session = await getServerSession(authOptions)
 
@@ -32,7 +33,7 @@ export async function GET(
 
     const event = await prisma.event.findFirst({
       where: {
-        id: params.id,
+        id: id,
         experience: {
           businessId: session.user.businessId
         }
@@ -63,8 +64,9 @@ export async function GET(
 // PUT update event
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   try {
     const session = await getServerSession(authOptions)
 
@@ -75,7 +77,7 @@ export async function PUT(
     // Verify event belongs to user's business
     const existingEvent = await prisma.event.findFirst({
       where: {
-        id: params.id,
+        id: id,
         experience: {
           businessId: session.user.businessId
         }
@@ -110,7 +112,7 @@ export async function PUT(
     }
 
     const event = await prisma.event.update({
-      where: { id: params.id },
+      where: { id: id },
       data: {
         name: validatedData.name,
         description: validatedData.description || null,
@@ -137,7 +139,7 @@ export async function PUT(
       // Get existing sessions without bookings (can be modified/deleted)
       const existingSessions = await prisma.session.findMany({
         where: {
-          eventId: params.id,
+          eventId: id,
           bookings: {
             none: {}
           }
@@ -157,7 +159,7 @@ export async function PUT(
 
       // Create new sessions
       const sessions = []
-      const dayMap = {
+      const dayMap: Record<string, number> = {
         'sunday': 0,
         'monday': 1,
         'tuesday': 2,
@@ -202,7 +204,7 @@ export async function PUT(
     return NextResponse.json(event)
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Validation error', details: error.errors }, { status: 400 })
+      return NextResponse.json({ error: 'Validation error', details: error.issues }, { status: 400 })
     }
 
     console.error('Error updating event:', error)
@@ -213,8 +215,9 @@ export async function PUT(
 // DELETE event
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   try {
     const session = await getServerSession(authOptions)
 
@@ -225,7 +228,7 @@ export async function DELETE(
     // Verify event belongs to user's business and check for bookings
     const event = await prisma.event.findFirst({
       where: {
-        id: params.id,
+        id: id,
         experience: {
           businessId: session.user.businessId
         }
@@ -254,7 +257,7 @@ export async function DELETE(
     }
 
     await prisma.event.delete({
-      where: { id: params.id }
+      where: { id: id }
     })
 
     return NextResponse.json({ message: 'Event deleted successfully' })

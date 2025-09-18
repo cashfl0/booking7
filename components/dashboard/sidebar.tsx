@@ -14,8 +14,7 @@ import {
   Megaphone,
   Settings,
   LogOut,
-  ChevronDown,
-  ChevronRight
+  ChevronDown
 } from 'lucide-react'
 
 const navigation = [

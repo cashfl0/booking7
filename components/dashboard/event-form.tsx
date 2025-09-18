@@ -17,8 +17,6 @@ interface Event {
   isActive: boolean
   sessions?: Array<{
     id: string
-    startTime: string
-    endTime: string
   }>
 }
 
@@ -82,9 +80,10 @@ export function EventForm({ event, experienceId, onSubmit, onCancel, isLoading }
     }
 
     try {
+      const description = formData.description.trim()
       await onSubmit({
         name: formData.name.trim(),
-        description: formData.description.trim() || null,
+        description: description || null,
         startDate: new Date(formData.startDate).toISOString(),
         endDate: new Date(formData.endDate).toISOString(),
         experienceId: formData.experienceId,
@@ -203,7 +202,7 @@ export function EventForm({ event, experienceId, onSubmit, onCancel, isLoading }
           </div>
 
           <div className="space-y-2">
-            {sessionTimes.map((sessionTime, index) => (
+            {sessionTimes.map((sessionTime) => (
               <div key={sessionTime.id} className="flex items-center gap-2">
                 <Input
                   type="time"
