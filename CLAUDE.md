@@ -45,6 +45,19 @@ if (error instanceof z.ZodError) {
 - All operations include business-scoped access control
 - Booking protection prevents deletion of sessions/events/experiences with bookings
 
+## Database Schema Changes
+🚨 **NEVER DELETE THE DATABASE** - User sessions will break and users won't be able to log in.
+
+For schema changes:
+1. Update `prisma/schema.prisma`
+2. Run `npx prisma migrate dev --name "descriptive_name"`
+3. Run `npx prisma generate` to ensure client is updated
+4. Update seed file if needed to handle new schema
+5. Test that existing functionality still works
+6. Run `npm run build` to catch any type errors
+
+Always use migrations to evolve the schema, never reset/delete the database.
+
 ## Development Workflow
 1. Write code following these patterns
 2. Run `npm run lint` periodically
