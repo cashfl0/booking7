@@ -24,24 +24,47 @@ export default async function DashboardPage() {
   }
 
   // Get basic stats for the dashboard
-  const business = await prisma.business.findUnique({
-    where: { id: session.user.businessId },
-    include: {
-      experiences: {
-        include: {
-          events: {
-            include: {
-              sessions: {
-                include: {
-                  bookings: true
+  let business
+  try {
+    console.log('Dashboard: Attempting to find business', {
+      businessId: session.user.businessId,
+      userId: session.user.id
+    })
+
+    business = await prisma.business.findUnique({
+      where: { id: session.user.businessId },
+      include: {
+        experiences: {
+          include: {
+            events: {
+              include: {
+                sessions: {
+                  include: {
+                    bookings: true
+                  }
                 }
               }
             }
           }
         }
       }
-    }
-  })
+    })
+
+    console.log('Dashboard: Business query result', {
+      found: !!business,
+      businessId: business?.id,
+      businessName: business?.name
+    })
+  } catch (error) {
+    console.error('Dashboard: Database error while finding business', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      businessId: session.user.businessId,
+      userId: session.user.id
+    })
+
+    // Don't redirect on database errors - show an error page instead
+    throw new Error('Database connection error. Please try again in a moment.')
+  }
 
   if (!business) {
     console.error('Dashboard: Business not found for authenticated user', {
@@ -49,6 +72,9 @@ export default async function DashboardPage() {
       businessId: session.user.businessId,
       email: session.user.email
     })
+
+    // Add a delay to prevent rapid redirect loops
+    await new Promise(resolve => setTimeout(resolve, 1000))
     redirect('/auth/signin?error=business_not_found')
   }
 
