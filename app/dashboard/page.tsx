@@ -1,13 +1,15 @@
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 
 export default async function DashboardPage() {
+  // Authentication is handled by middleware.ts
+  // We only need session data for business logic
   const session = await getServerSession(authOptions)
 
+  // Session is guaranteed to exist due to middleware protection
   if (!session) {
-    redirect('/auth/signin')
+    throw new Error('Session not found - middleware should prevent this')
   }
 
   // Get basic stats for the dashboard
@@ -31,7 +33,7 @@ export default async function DashboardPage() {
   })
 
   if (!business) {
-    redirect('/auth/signin')
+    throw new Error('Business not found for authenticated user')
   }
 
   // Calculate stats
