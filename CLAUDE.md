@@ -51,8 +51,10 @@ if (error instanceof z.ZodError) {
 For schema changes:
 1. Update `prisma/schema.prisma`
 2. Run `npx prisma migrate dev --name "descriptive_name"`
-3. Update seed file if needed to handle new schema
-4. Test that existing functionality still works
+3. Run `npx prisma generate` to ensure client is updated
+4. Update seed file if needed to handle new schema
+5. Test that existing functionality still works
+6. Run `npm run build` to catch any type errors
 
 Always use migrations to evolve the schema, never reset/delete the database.
 
