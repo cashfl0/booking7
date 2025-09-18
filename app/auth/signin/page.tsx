@@ -17,6 +17,23 @@ function SignInForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const from = searchParams.get('from') || '/dashboard'
+  const errorParam = searchParams.get('error')
+
+  // Handle error messages from redirects
+  const getErrorMessage = (errorCode: string | null) => {
+    switch (errorCode) {
+      case 'session_expired':
+        return 'Your session has expired. Please sign in again.'
+      case 'no_business_access':
+        return 'Your account is not associated with a business. Please contact support.'
+      case 'business_not_found':
+        return 'Business data not found. Your session may be outdated. Please sign in again.'
+      default:
+        return null
+    }
+  }
+
+  const initialError = getErrorMessage(errorParam)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -57,9 +74,9 @@ function SignInForm() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
-              {error && (
+              {(error || initialError) && (
                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-                  {error}
+                  {error || initialError}
                 </div>
               )}
 
