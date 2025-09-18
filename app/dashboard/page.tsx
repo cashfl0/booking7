@@ -44,23 +44,19 @@ export default async function DashboardPage() {
       eventSum + event.sessions.reduce((sessionSum, session) => sessionSum + session.bookings.length, 0), 0), 0)
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">{business.name}</h1>
-              <p className="text-gray-600">Welcome back, {session.user.name || session.user.email}</p>
-            </div>
-            <div className="text-sm text-gray-500">
-              Role: {session.user.role}
-            </div>
-          </div>
+    <div className="p-8">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">{business.name}</h1>
+        <p className="text-gray-600">Welcome back, {session.user.name || session.user.email}</p>
+        <div className="text-sm text-gray-500 mt-1">
+          Role: {session.user.role}
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      {/* Dashboard Content */}
+      <div className="space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div className="bg-white p-6 rounded-lg shadow">
             <h3 className="text-lg font-medium text-gray-900">Experiences</h3>
             <p className="text-3xl font-bold text-blue-600">{totalExperiences}</p>
