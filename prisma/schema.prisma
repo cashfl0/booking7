@@ -36,6 +36,7 @@ model Business {
   // Relations
   users       User[]
   experiences Experience[]
+  addOns      AddOn[]
 
   @@map("businesses")
 }
@@ -92,7 +93,7 @@ model Event {
   // Relations
   experience Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
   sessions   Session[]
-  addOns     AddOn[]
+  addOns     EventAddOn[]
 
   @@map("events")
 }
@@ -122,16 +123,31 @@ model AddOn {
   price        Decimal @db.Decimal(10, 2)
   isActive     Boolean @default(true)
   sortOrder    Int     @default(1)
-  eventId      String
+  businessId   String
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   // Relations
-  event        Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  business     Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
   bookingItems BookingItem[]
+  events       EventAddOn[]
 
-  @@unique([eventId, name])
+  @@unique([businessId, name])
   @@map("add_ons")
+}
+
+model EventAddOn {
+  id       String @id @default(cuid())
+  eventId  String
+  addOnId  String
+  createdAt DateTime @default(now())
+
+  // Relations
+  event    Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  addOn    AddOn  @relation(fields: [addOnId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, addOnId])
+  @@map("event_add_ons")
 }
 
 model Booking {

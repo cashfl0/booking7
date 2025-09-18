@@ -200,39 +200,59 @@ async function main() {
 
   console.log(`Created ${sessions.length + laserSessions.length} sessions`)
 
-  // Create add-ons
-  await prisma.addOn.createMany({
+  // Create add-ons (now global to business)
+  const addOns = await prisma.addOn.createMany({
     data: [
       {
         name: 'Photo Package',
-        description: 'Professional photos of your escape room experience',
+        description: 'Professional photos of your experience',
         price: 15.00,
-        eventId: escapeEvent.id
+        businessId: business.id
       },
       {
         name: 'Hint Package',
         description: 'Extra hints to help solve the puzzles',
         price: 5.00,
-        eventId: escapeEvent.id
+        businessId: business.id
       },
       {
         name: 'Victory Celebration',
         description: 'Champagne toast for successful teams',
         price: 20.00,
-        eventId: escapeEvent.id
+        businessId: business.id
       },
       {
         name: 'Laser Vest Upgrade',
         description: 'Premium vest with better accuracy',
         price: 10.00,
-        eventId: laserEvent.id
+        businessId: business.id
       },
       {
         name: 'Team Photo',
         description: 'Group photo after the battle',
         price: 12.00,
-        eventId: laserEvent.id
+        businessId: business.id
       }
+    ]
+  })
+
+  // Get the created add-ons so we can associate them with events
+  const createdAddOns = await prisma.addOn.findMany({
+    where: { businessId: business.id }
+  })
+
+  // Associate some add-ons with events
+  await prisma.eventAddOn.createMany({
+    data: [
+      // Escape room event add-ons
+      { eventId: escapeEvent.id, addOnId: createdAddOns.find(a => a.name === 'Photo Package')!.id },
+      { eventId: escapeEvent.id, addOnId: createdAddOns.find(a => a.name === 'Hint Package')!.id },
+      { eventId: escapeEvent.id, addOnId: createdAddOns.find(a => a.name === 'Victory Celebration')!.id },
+
+      // Laser tag event add-ons
+      { eventId: laserEvent.id, addOnId: createdAddOns.find(a => a.name === 'Laser Vest Upgrade')!.id },
+      { eventId: laserEvent.id, addOnId: createdAddOns.find(a => a.name === 'Team Photo')!.id },
+      { eventId: laserEvent.id, addOnId: createdAddOns.find(a => a.name === 'Photo Package')!.id }, // Photo package available for both
     ]
   })
 
