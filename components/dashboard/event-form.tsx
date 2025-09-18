@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Plus, X } from 'lucide-react'
+import { AddOnsSection } from '@/components/dashboard/event-addons-section'
 
 interface Event {
   id?: string
@@ -236,6 +237,11 @@ export function EventForm({ event, experienceId, onSubmit, onCancel, isLoading }
           </p>
         </div>
       </div>
+
+      {/* Add-ons Selection */}
+      {event?.id && (
+        <AddOnsSection eventId={event.id} />
+      )}
 
       <div className="flex items-center space-x-2">
         <input
