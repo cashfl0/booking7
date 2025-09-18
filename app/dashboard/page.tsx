@@ -1,7 +1,7 @@
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { clearSessionAndRedirect } from '@/lib/auth-helpers'
+import { redirect } from 'next/navigation'
 
 export default async function DashboardPage() {
   // Authentication is handled by middleware.ts
@@ -10,20 +10,17 @@ export default async function DashboardPage() {
 
   // Session is guaranteed to exist due to middleware protection
   if (!session) {
-    await clearSessionAndRedirect('session_expired', {
-      message: 'No session found - middleware should prevent this'
-    })
-    return // This won't execute due to redirect, but helps TypeScript
+    console.error('Dashboard: No session found - middleware should prevent this')
+    redirect('/auth/signin?error=session_expired')
   }
 
   // Validate business exists for this user
   if (!session.user.businessId) {
-    await clearSessionAndRedirect('no_business_access', {
+    console.error('Dashboard: User has no businessId', {
       userId: session.user.id,
-      email: session.user.email,
-      message: 'User has no businessId'
+      email: session.user.email
     })
-    return // This won't execute due to redirect, but helps TypeScript
+    redirect('/auth/signin?error=no_business_access')
   }
 
   // Get basic stats for the dashboard
@@ -47,13 +44,12 @@ export default async function DashboardPage() {
   })
 
   if (!business) {
-    await clearSessionAndRedirect('business_not_found', {
+    console.error('Dashboard: Business not found for authenticated user', {
       userId: session.user.id,
       businessId: session.user.businessId,
-      email: session.user.email,
-      message: 'Business not found for authenticated user'
+      email: session.user.email
     })
-    return // This won't execute due to redirect, but helps TypeScript
+    redirect('/auth/signin?error=business_not_found')
   }
 
   // Calculate stats
