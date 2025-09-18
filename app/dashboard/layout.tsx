@@ -1,18 +1,11 @@
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
-import { redirect } from 'next/navigation'
 import { MobileDashboard } from '@/components/dashboard/mobile-dashboard'
 
-export default async function DashboardLayout({
+export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const session = await getServerSession(authOptions)
-
-  if (!session) {
-    redirect('/auth/signin')
-  }
-
+  // Authentication is handled by middleware.ts
+  // No need for redundant session check here
   return <MobileDashboard>{children}</MobileDashboard>
 }
