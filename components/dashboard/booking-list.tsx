@@ -70,9 +70,18 @@ interface BookingListProps {
   experiences: Experience[]
   events: Event[]
   onBookingUpdate: (updatedBooking: Booking) => void
+  autoOpenBookingId?: string | null
+  onAutoOpenComplete?: () => void
 }
 
-export function BookingList({ initialBookings, experiences, events, onBookingUpdate }: BookingListProps) {
+export function BookingList({
+  initialBookings,
+  experiences,
+  events,
+  onBookingUpdate,
+  autoOpenBookingId,
+  onAutoOpenComplete
+}: BookingListProps) {
   const [bookings, setBookings] = useState<Booking[]>(initialBookings)
   const [filteredEvents, setFilteredEvents] = useState<Event[]>(events)
   const [loading, setLoading] = useState(false)
@@ -97,6 +106,17 @@ export function BookingList({ initialBookings, experiences, events, onBookingUpd
       setFilteredEvents(events)
     }
   }, [filters.experienceId, events, filters.eventId])
+
+  // Auto-open booking if bookingId is provided
+  useEffect(() => {
+    if (autoOpenBookingId && bookings.length > 0) {
+      const booking = bookings.find(b => b.id === autoOpenBookingId)
+      if (booking) {
+        setSelectedBooking(booking)
+        onAutoOpenComplete?.()
+      }
+    }
+  }, [autoOpenBookingId, bookings, onAutoOpenComplete])
 
   const fetchBookings = async () => {
     setLoading(true)
