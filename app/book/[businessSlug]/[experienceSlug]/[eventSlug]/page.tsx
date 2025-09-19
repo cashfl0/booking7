@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
-import { SessionSelectionClient } from '@/components/book/session-selection-client'
+import { CompleteBookingFlow } from '@/components/book/complete-booking-flow'
 
 interface SessionSelectionPageProps {
   params: Promise<{
@@ -47,7 +47,12 @@ async function getEventData(businessSlug: string, experienceSlug: string, eventS
           startTime: 'asc'
         }
       },
-      experience: true
+      experience: true,
+      addOns: {
+        include: {
+          addOn: true
+        }
+      }
     }
   })
 
@@ -55,10 +60,16 @@ async function getEventData(businessSlug: string, experienceSlug: string, eventS
     return null
   }
 
+  // Filter active add-ons after query
+  const activeAddOns = event.addOns
+    .map(ea => ea.addOn)
+    .filter(addOn => addOn.isActive)
+
   return {
     business,
     experience,
-    event
+    event,
+    addOns: activeAddOns
   }
 }
 
@@ -71,7 +82,7 @@ export default async function SessionSelectionPage({ params }: SessionSelectionP
     notFound()
   }
 
-  const { business, experience, event } = data
+  const { business, experience, event, addOns } = data
 
   // Serialize sessions by converting Date to string
   const serializedSessions = event.sessions.map(session => ({
@@ -102,12 +113,19 @@ export default async function SessionSelectionPage({ params }: SessionSelectionP
     experience: serializedExperience
   }
 
+  // Serialize add-ons
+  const serializedAddOns = addOns.map(addOn => ({
+    ...addOn,
+    price: Number(addOn.price)
+  }))
+
   return (
-    <SessionSelectionClient
+    <CompleteBookingFlow
       business={business}
       experience={serializedExperience}
       event={serializedEvent}
       sessionsByDate={sessionsByDate}
+      addOns={serializedAddOns}
     />
   )
 }
