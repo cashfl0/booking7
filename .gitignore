@@ -41,3 +41,9 @@ yarn-error.log*
 next-env.d.ts
 
 /app/generated/prisma
+
+# Database seeding and migration scripts
+prisma/seed.ts
+scripts/seed-*.js
+scripts/migrate-*.ts
+scripts/simple-seed.js

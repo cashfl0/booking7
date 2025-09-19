@@ -12,6 +12,7 @@ interface Event {
   id?: string
   name: string
   description: string | null
+  basePrice: number
   startDate: string
   endDate: string
   experienceId: string
@@ -38,6 +39,7 @@ export function EventForm({ event, experienceId, onSubmit, onCancel, isLoading }
   const [formData, setFormData] = useState({
     name: event?.name || '',
     description: event?.description || '',
+    basePrice: event?.basePrice || 0,
     startDate: event?.startDate ? new Date(event.startDate).toISOString().split('T')[0] : '',
     endDate: event?.endDate ? new Date(event.endDate).toISOString().split('T')[0] : '',
     experienceId: event?.experienceId || experienceId,
@@ -67,6 +69,9 @@ export function EventForm({ event, experienceId, onSubmit, onCancel, isLoading }
     if (!formData.endDate) {
       newErrors.endDate = 'End date is required'
     }
+    if (formData.basePrice < 0) {
+      newErrors.basePrice = 'Price must be positive'
+    }
     if (formData.startDate && formData.endDate) {
       const startDate = new Date(formData.startDate)
       const endDate = new Date(formData.endDate)
@@ -85,6 +90,7 @@ export function EventForm({ event, experienceId, onSubmit, onCancel, isLoading }
       await onSubmit({
         name: formData.name.trim(),
         description: description || null,
+        basePrice: formData.basePrice,
         startDate: new Date(formData.startDate).toISOString(),
         endDate: new Date(formData.endDate).toISOString(),
         experienceId: formData.experienceId,
@@ -120,6 +126,21 @@ export function EventForm({ event, experienceId, onSubmit, onCancel, isLoading }
           placeholder="Describe your event"
           rows={3}
         />
+      </div>
+
+      <div>
+        <Label htmlFor="basePrice">Base Price ($)</Label>
+        <Input
+          id="basePrice"
+          type="number"
+          min="0"
+          step="0.01"
+          value={formData.basePrice}
+          onChange={(e) => setFormData({ ...formData, basePrice: parseFloat(e.target.value) || 0 })}
+          placeholder="Enter base price"
+          className={errors.basePrice ? 'border-red-500' : ''}
+        />
+        {errors.basePrice && <p className="text-sm text-red-500 mt-1">{errors.basePrice}</p>}
       </div>
 
       <div className="grid grid-cols-2 gap-4">

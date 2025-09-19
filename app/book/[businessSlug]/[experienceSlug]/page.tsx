@@ -33,12 +33,25 @@ async function getExperienceData(businessSlug: string, experienceSlug: string) {
             where: {
               startTime: {
                 gte: new Date()
+              },
+              isActive: true
+            },
+            include: {
+              _count: {
+                select: {
+                  bookings: {
+                    where: {
+                      status: {
+                        in: ['CONFIRMED', 'PENDING']
+                      }
+                    }
+                  }
+                }
               }
             },
             orderBy: {
               startTime: 'asc'
-            },
-            take: 1
+            }
           }
         },
         orderBy: {
@@ -72,19 +85,30 @@ export default async function EventsPage({ params }: EventsPageProps) {
   // Filter events that have available sessions and serialize data
   const availableEvents = experience.events
     .filter(event => event.sessions.length > 0)
-    .map(event => ({
-      ...event,
-      sessions: event.sessions.map(session => ({
-        ...session,
-        startTime: session.startTime.toISOString(),
-        endTime: session.endTime.toISOString()
-      }))
-    }))
+    .map(event => {
+      // Calculate available sessions (not full)
+      const availableSessions = event.sessions.filter(session => {
+        const maxCapacity = session.maxCapacity || event.maxCapacity || experience.maxCapacity
+        const bookedCount = session._count?.bookings || 0
+        return bookedCount < maxCapacity
+      })
+
+      return {
+        ...event,
+        basePrice: Number(event.basePrice),
+        availableSessionsCount: availableSessions.length,
+        sessions: event.sessions.map(session => ({
+          ...session,
+          startTime: session.startTime.toISOString(),
+          endTime: session.endTime.toISOString(),
+          availableSpots: (session.maxCapacity || event.maxCapacity || experience.maxCapacity) - (session._count?.bookings || 0)
+        }))
+      }
+    })
 
   // Serialize experience data
   const serializedExperience = {
     ...experience,
-    basePrice: Number(experience.basePrice),
     events: availableEvents
   }
 

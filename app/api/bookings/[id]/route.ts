@@ -172,7 +172,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
       // If quantity changed, we need to recalculate totals
       if (validatedData.quantity) {
-        const basePrice = existingBooking.session.event.experience.basePrice
+        const basePrice = existingBooking.session.event.basePrice
         const sessionItems = await prisma.bookingItem.findMany({
           where: {
             bookingId: id,

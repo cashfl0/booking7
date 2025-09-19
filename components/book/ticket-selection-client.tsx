@@ -17,13 +17,13 @@ interface Experience {
   id: string
   name: string
   slug: string
-  basePrice: number
 }
 
 interface Event {
   id: string
   name: string
   slug: string
+  basePrice: number
 }
 
 interface Session {
@@ -68,7 +68,7 @@ export function TicketSelectionClient({
   const [addOnQuantities, setAddOnQuantities] = useState<Record<string, number>>({})
   const [expandedDetails, setExpandedDetails] = useState<Record<string, boolean>>({})
 
-  const sessionPrice = Number(experience.basePrice) || 0
+  const sessionPrice = Number(event.basePrice) || 0
 
   const handleTicketChange = (change: number) => {
     const currentQuantity = isNaN(ticketQuantity) ? 0 : ticketQuantity

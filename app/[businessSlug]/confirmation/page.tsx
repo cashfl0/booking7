@@ -77,9 +77,9 @@ export default async function ConfirmationPage({ params, searchParams }: Confirm
       endTime: booking.session.endTime.toISOString(),
       event: {
         ...booking.session.event,
+        basePrice: Number(booking.session.event.basePrice),
         experience: {
-          ...booking.session.event.experience,
-          basePrice: Number(booking.session.event.experience.basePrice)
+          ...booking.session.event.experience
         }
       }
     }

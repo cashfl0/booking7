@@ -138,7 +138,6 @@ export default async function DashboardPage() {
                         <div className="mt-2 space-x-4 text-sm text-gray-500">
                           <span>Duration: {experience.duration} minutes</span>
                           <span>Max Capacity: {experience.maxCapacity}</span>
-                          <span>Base Price: ${experience.basePrice.toString()}</span>
                         </div>
                       </div>
                       <div className="text-right">

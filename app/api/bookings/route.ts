@@ -182,7 +182,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Calculate total cost
-    const basePrice = sessionData.event.experience.basePrice
+    const basePrice = sessionData.event.basePrice
     let sessionTotal = Number(basePrice) * validatedData.quantity
 
     // Validate and calculate add-on costs

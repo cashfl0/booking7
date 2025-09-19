@@ -18,6 +18,7 @@ interface Event {
   id: string
   name: string
   description: string | null
+  basePrice: number
   startDate: string
   endDate: string
   experienceId: string
@@ -309,7 +310,11 @@ export default function EventsPage() {
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div>
+                          <p className="text-sm text-gray-500">Base Price</p>
+                          <p className="font-semibold">${Number(event.basePrice).toFixed(2)}</p>
+                        </div>
                         <div>
                           <p className="text-sm text-gray-500">Start Date</p>
                           <p className="font-semibold">{startDate.toLocaleDateString()}</p>
