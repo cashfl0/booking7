@@ -47,3 +47,7 @@ prisma/seed.ts
 scripts/seed-*.js
 scripts/migrate-*.ts
 scripts/simple-seed.js
+
+# To-do list and Claude stuff for dev
+claude.md
+to-do.md

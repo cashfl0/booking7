@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, CheckCircle } from 'lucide-react'
 import { format } from 'date-fns'
@@ -26,6 +27,37 @@ export function BookingConfirmationComponent({
   ticketQuantity,
   confirmationData
 }: BookingConfirmationProps) {
+  const [qrCodeUrl, setQrCodeUrl] = useState<string>('')
+
+  useEffect(() => {
+    if (confirmationData?.bookingId) {
+      // Generate QR code that contains booking information
+      const qrData = {
+        bookingId: confirmationData.bookingId,
+        business: business.slug,
+        type: 'booking'
+      }
+
+      // Create QR code that points to check-in endpoint
+      const checkInUrl = `${window.location.origin}/dashboard/check-in?data=${encodeURIComponent(JSON.stringify(qrData))}`
+
+      // Generate QR code
+      import('qrcode').then(QRCode => {
+        QRCode.toDataURL(checkInUrl, {
+          width: 200,
+          margin: 2,
+          color: {
+            dark: '#000000',
+            light: '#FFFFFF'
+          }
+        }).then(url => {
+          setQrCodeUrl(url)
+        }).catch(err => {
+          console.error('Error generating QR code:', err)
+        })
+      })
+    }
+  }, [confirmationData?.bookingId, business.slug])
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-2xl mx-auto px-4 py-8">
@@ -69,6 +101,19 @@ export function BookingConfirmationComponent({
                 {guestForm.phone && <p><span className="font-medium">Phone:</span> {guestForm.phone}</p>}
               </div>
             </div>
+
+            {/* QR Code for Check-in */}
+            {qrCodeUrl && (
+              <div className="text-center bg-gray-50 rounded-lg p-4 mb-6">
+                <h3 className="font-semibold mb-3">Check-in QR Code</h3>
+                <div className="flex justify-center mb-2">
+                  <img src={qrCodeUrl} alt="Check-in QR Code" className="border rounded" />
+                </div>
+                <p className="text-sm text-gray-600">
+                  Show this QR code to staff for quick check-in
+                </p>
+              </div>
+            )}
 
             <p className="text-sm text-gray-600">
               A confirmation email has been sent to {guestForm.email}
