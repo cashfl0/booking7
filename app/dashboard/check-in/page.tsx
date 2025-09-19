@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { CheckCircle, User, Calendar, Clock, MapPin, AlertCircle, Loader } from 'lucide-react'
+import { CheckCircle, User, Calendar, Clock, AlertCircle, Loader } from 'lucide-react'
 import { format } from 'date-fns'
 
 interface BookingData {
@@ -59,7 +59,7 @@ interface BookingData {
   }>
 }
 
-export default function CheckInPage() {
+function CheckInForm() {
   const searchParams = useSearchParams()
   const [bookingData, setBookingData] = useState<BookingData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -115,7 +115,7 @@ export default function CheckInPage() {
         throw new Error(errorData.error || 'Failed to check in')
       }
 
-      const result = await response.json()
+      await response.json()
 
       // Update local state
       setBookingData(prev => prev ? {
@@ -328,5 +328,13 @@ export default function CheckInPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function CheckInPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <CheckInForm />
+    </Suspense>
   )
 }

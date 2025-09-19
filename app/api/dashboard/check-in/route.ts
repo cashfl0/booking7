@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     let qrData
     try {
       qrData = JSON.parse(decodeURIComponent(data))
-    } catch (error) {
+    } catch {
       return NextResponse.json({ error: 'Invalid QR code data format' }, { status: 400 })
     }
 
