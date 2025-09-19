@@ -133,6 +133,7 @@ async function main() {
   const escapeEvent = await prisma.event.create({
     data: {
       name: 'Weekend Mystery Challenge',
+      slug: 'weekend-mystery-challenge',
       description: 'Special weekend event with bonus puzzles',
       startDate: tomorrow,
       endDate: nextWeek,
@@ -143,6 +144,7 @@ async function main() {
   const laserEvent = await prisma.event.create({
     data: {
       name: 'Battle Royale Tournament',
+      slug: 'battle-royale-tournament',
       description: 'Competitive laser tag tournament',
       startDate: tomorrow,
       endDate: nextWeek,

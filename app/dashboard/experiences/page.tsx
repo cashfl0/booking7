@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Edit, Trash2, Star } from 'lucide-react'
+import { Plus, Edit, Trash2, Star, ExternalLink, Copy } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ExperienceForm } from '@/components/dashboard/experience-form'
@@ -16,6 +16,9 @@ interface Experience {
   maxCapacity: number
   isActive: boolean
   sortOrder: number
+  business: {
+    slug: string
+  }
   events: Array<{
     id: string
     sessions: Array<{ id: string }>
@@ -28,6 +31,25 @@ export default function ExperiencesPage() {
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [editingExperience, setEditingExperience] = useState<Experience | null>(null)
   const [submitting, setSubmitting] = useState(false)
+
+  const copyBookingUrl = async (experience: Experience) => {
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
+    const bookingUrl = `${baseUrl}/book/${experience.business.slug}/${experience.slug}`
+
+    try {
+      await navigator.clipboard.writeText(bookingUrl)
+      alert('Booking URL copied to clipboard!')
+    } catch (error) {
+      console.error('Failed to copy URL:', error)
+      alert('Failed to copy URL')
+    }
+  }
+
+  const openBookingUrl = (experience: Experience) => {
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
+    const bookingUrl = `${baseUrl}/book/${experience.business.slug}/${experience.slug}`
+    window.open(bookingUrl, '_blank')
+  }
 
   const fetchExperiences = async () => {
     try {
@@ -43,7 +65,7 @@ export default function ExperiencesPage() {
     }
   }
 
-  const handleCreateExperience = async (data: Omit<Experience, 'id' | 'slug' | 'sortOrder' | 'events'>) => {
+  const handleCreateExperience = async (data: Omit<Experience, 'id' | 'slug' | 'sortOrder' | 'events' | 'business'>) => {
     setSubmitting(true)
     try {
       const response = await fetch('/api/experiences', {
@@ -66,7 +88,7 @@ export default function ExperiencesPage() {
     }
   }
 
-  const handleEditExperience = async (data: Omit<Experience, 'id' | 'slug' | 'sortOrder' | 'events'>) => {
+  const handleEditExperience = async (data: Omit<Experience, 'id' | 'slug' | 'sortOrder' | 'events' | 'business'>) => {
     if (!editingExperience) return
 
     setSubmitting(true)
@@ -206,7 +228,7 @@ export default function ExperiencesPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                     <div>
                       <p className="text-sm text-gray-500">Base Price</p>
                       <p className="font-semibold">${experience.basePrice.toString()}</p>
@@ -222,6 +244,34 @@ export default function ExperiencesPage() {
                     <div>
                       <p className="text-sm text-gray-500">Sessions</p>
                       <p className="font-semibold">{totalSessions} scheduled</p>
+                    </div>
+                  </div>
+
+                  {/* Booking URL Section */}
+                  <div className="border-t pt-4">
+                    <p className="text-sm text-gray-500 mb-2">Booking URL</p>
+                    <div className="flex items-center gap-2 bg-gray-50 p-3 rounded-lg">
+                      <code className="flex-1 text-sm text-gray-700 break-all">
+                        {typeof window !== 'undefined' ? window.location.origin : ''}/book/{experience.business.slug}/{experience.slug}
+                      </code>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => copyBookingUrl(experience)}
+                          title="Copy URL"
+                        >
+                          <Copy className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openBookingUrl(experience)}
+                          title="Open in new tab"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
