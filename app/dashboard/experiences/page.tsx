@@ -11,7 +11,6 @@ interface Experience {
   name: string
   slug: string
   description: string | null
-  basePrice: number
   duration: number
   maxCapacity: number
   isActive: boolean
@@ -228,11 +227,7 @@ export default function ExperiencesPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                    <div>
-                      <p className="text-sm text-gray-500">Base Price</p>
-                      <p className="font-semibold">${experience.basePrice.toString()}</p>
-                    </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                     <div>
                       <p className="text-sm text-gray-500">Duration</p>
                       <p className="font-semibold">{experience.duration} min</p>

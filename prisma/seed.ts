@@ -95,7 +95,6 @@ async function main() {
       name: 'Mystery Escape Room',
       slug: 'escape-room',
       description: 'Test your wits in our challenging escape room experience',
-      basePrice: 35.00,
       duration: 60,
       maxCapacity: 8,
       businessId: business.id
@@ -114,7 +113,6 @@ async function main() {
       name: 'Laser Tag Arena',
       slug: 'laser-tag',
       description: 'High-tech laser tag battles in our futuristic arena',
-      basePrice: 25.00,
       duration: 30,
       maxCapacity: 12,
       businessId: business.id
@@ -135,6 +133,7 @@ async function main() {
       name: 'Weekend Mystery Challenge',
       slug: 'weekend-mystery-challenge',
       description: 'Special weekend event with bonus puzzles',
+      basePrice: 35.00,
       startDate: tomorrow,
       endDate: nextWeek,
       experienceId: escapeRoom.id
@@ -146,6 +145,7 @@ async function main() {
       name: 'Battle Royale Tournament',
       slug: 'battle-royale-tournament',
       description: 'Competitive laser tag tournament',
+      basePrice: 25.00,
       startDate: tomorrow,
       endDate: nextWeek,
       experienceId: laserTag.id

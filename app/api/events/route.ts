@@ -7,6 +7,7 @@ import { z } from 'zod'
 const eventSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100),
   description: z.string().optional().or(z.literal('')),
+  basePrice: z.number().min(0, 'Price must be positive'),
   startDate: z.string().refine((date) => !isNaN(Date.parse(date)), 'Invalid start date'),
   endDate: z.string().refine((date) => !isNaN(Date.parse(date)), 'Invalid end date'),
   experienceId: z.string().min(1, 'Experience is required'),
@@ -58,7 +59,13 @@ export async function GET(request: NextRequest) {
       orderBy: { startDate: 'asc' }
     })
 
-    return NextResponse.json(events)
+    // Serialize Decimal fields to avoid client component issues
+    const serializedEvents = events.map(event => ({
+      ...event,
+      basePrice: Number(event.basePrice)
+    }))
+
+    return NextResponse.json(serializedEvents)
   } catch (error) {
     console.error('Error fetching events:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -129,6 +136,7 @@ export async function POST(request: NextRequest) {
         name: validatedData.name,
         slug: slug,
         description: validatedData.description || null,
+        basePrice: validatedData.basePrice,
         startDate: startDate,
         endDate: endDate,
         experienceId: validatedData.experienceId,

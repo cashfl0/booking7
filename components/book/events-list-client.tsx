@@ -29,6 +29,7 @@ interface Event {
   slug: string
   description?: string | null
   sessions: Session[]
+  availableSessionsCount: number
 }
 
 interface EventsListClientProps {
@@ -105,7 +106,7 @@ export function EventsListClient({ business, experience, events }: EventsListCli
                       <div className="flex items-center gap-4 text-sm text-gray-500">
                         <div className="flex items-center gap-1">
                           <Users className="w-4 h-4" />
-                          <span>{event.sessions.length} sessions available</span>
+                          <span>{event.availableSessionsCount} session{event.availableSessionsCount !== 1 ? 's' : ''} available</span>
                         </div>
                         {nextSession && (
                           <div className="flex items-center gap-1">

@@ -1,4 +1,3 @@
-// Ticketing platform schema: Business → Experience → Event → Session
 generator client {
   provider = "prisma-client-js"
 }
@@ -9,132 +8,118 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  firstName String?
-  lastName  String?
-  password  String
-  role      UserRole @default(EMPLOYEE)
+  id         String    @id @default(cuid())
+  email      String    @unique
+  firstName  String?
+  lastName   String?
+  password   String
+  role       UserRole  @default(EMPLOYEE)
   businessId String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  business Business? @relation(fields: [businessId], references: [id])
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  business   Business? @relation(fields: [businessId], references: [id])
 
   @@map("users")
 }
 
 model Business {
-  id          String  @id @default(cuid())
+  id          String       @id @default(cuid())
   name        String
-  slug        String  @unique
+  slug        String       @unique
   description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relations
-  users       User[]
-  experiences Experience[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
   addOns      AddOn[]
+  experiences Experience[]
   guests      Guest[]
+  users       User[]
 
   @@map("businesses")
 }
 
 model Guest {
-  id             String   @id @default(cuid())
+  id             String    @id @default(cuid())
   firstName      String
   lastName       String
   email          String
   phone          String?
-  zipCode        String?
-  marketingOptIn Boolean  @default(false)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
   businessId     String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  // Relations
-  business Business? @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  bookings Booking[]
+  marketingOptIn Boolean   @default(false)
+  zipCode        String?
+  bookings       Booking[]
+  business       Business? @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@map("guests")
 }
 
 model Experience {
-  id          String  @id @default(cuid())
+  id          String   @id @default(cuid())
   name        String
   slug        String
   description String?
-  basePrice   Decimal @db.Decimal(10, 2)
-  duration    Int     // minutes
+  duration    Int
   maxCapacity Int
-  isActive    Boolean @default(true)
-  sortOrder   Int     @default(1)
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(1)
   businessId  String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-
-  // Relations
-  business    Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
   events      Event[]
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@unique([businessId, slug])
   @@map("experiences")
 }
 
 model Event {
-  id           String   @id @default(cuid())
+  id           String       @id @default(cuid())
   name         String
-  slug         String
   description  String?
+  basePrice    Decimal      @db.Decimal(10, 2)
   startDate    DateTime
   endDate      DateTime
-  maxCapacity  Int?     // Override experience default if needed
-  isActive     Boolean  @default(true)
+  maxCapacity  Int?
+  isActive     Boolean      @default(true)
   experienceId String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  // Relations
-  experience Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
-  sessions   Session[]
-  addOns     EventAddOn[]
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  slug         String
+  addOns       EventAddOn[]
+  experience   Experience   @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+  sessions     Session[]
 
   @@unique([experienceId, slug])
   @@map("events")
 }
 
 model Session {
-  id           String   @id @default(cuid())
+  id           String    @id @default(cuid())
   startTime    DateTime
   endTime      DateTime
-  maxCapacity  Int?     // Override event/experience default if needed
-  currentCount Int      @default(0)
-  isActive     Boolean  @default(true)
+  maxCapacity  Int?
+  currentCount Int       @default(0)
+  isActive     Boolean   @default(true)
   eventId      String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  // Relations
-  event    Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  bookings Booking[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  bookings     Booking[]
+  event        Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   @@map("sessions")
 }
 
 model AddOn {
-  id           String  @id @default(cuid())
+  id           String        @id @default(cuid())
   name         String
   description  String?
-  price        Decimal @db.Decimal(10, 2)
-  isActive     Boolean @default(true)
-  sortOrder    Int     @default(1)
+  price        Decimal       @db.Decimal(10, 2)
+  isActive     Boolean       @default(true)
+  sortOrder    Int           @default(1)
   businessId   String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  // Relations
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
   business     Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
   bookingItems BookingItem[]
   events       EventAddOn[]
@@ -144,14 +129,12 @@ model AddOn {
 }
 
 model EventAddOn {
-  id       String @id @default(cuid())
-  eventId  String
-  addOnId  String
+  id        String   @id @default(cuid())
+  eventId   String
+  addOnId   String
   createdAt DateTime @default(now())
-
-  // Relations
-  event    Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  addOn    AddOn  @relation(fields: [addOnId], references: [id], onDelete: Cascade)
+  addOn     AddOn    @relation(fields: [addOnId], references: [id], onDelete: Cascade)
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   @@unique([eventId, addOnId])
   @@map("event_add_ons")
@@ -166,11 +149,9 @@ model Booking {
   status    BookingStatus @default(PENDING)
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
-
-  // Relations
-  session Session       @relation(fields: [sessionId], references: [id])
-  guest   Guest         @relation(fields: [guestId], references: [id])
-  items   BookingItem[]
+  items     BookingItem[]
+  guest     Guest         @relation(fields: [guestId], references: [id])
+  session   Session       @relation(fields: [sessionId], references: [id])
 
   @@map("bookings")
 }
@@ -184,10 +165,8 @@ model BookingItem {
   totalPrice Decimal         @db.Decimal(10, 2)
   itemType   BookingItemType
   createdAt  DateTime        @default(now())
-
-  // Relations
-  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  addOn   AddOn?  @relation(fields: [addOnId], references: [id])
+  addOn      AddOn?          @relation(fields: [addOnId], references: [id])
+  booking    Booking         @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 
   @@map("booking_items")
 }

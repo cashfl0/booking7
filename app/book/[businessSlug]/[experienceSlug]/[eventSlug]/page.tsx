@@ -92,12 +92,12 @@ export default async function SessionSelectionPage({ params }: SessionSelectionP
 
   // Serialize other data
   const serializedExperience = {
-    ...experience,
-    basePrice: Number(experience.basePrice)
+    ...experience
   }
 
   const serializedEvent = {
     ...event,
+    basePrice: Number(event.basePrice),
     sessions: serializedSessions,
     experience: serializedExperience
   }

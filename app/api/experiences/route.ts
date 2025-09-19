@@ -7,7 +7,6 @@ import { z } from 'zod'
 const experienceSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100),
   description: z.string().optional(),
-  basePrice: z.number().min(0, 'Price must be positive'),
   duration: z.number().min(1, 'Duration must be at least 1 minute'),
   maxCapacity: z.number().min(1, 'Capacity must be at least 1'),
   isActive: z.boolean().default(true)
@@ -41,11 +40,8 @@ export async function GET() {
       orderBy: { sortOrder: 'asc' }
     })
 
-    // Serialize Decimal values to avoid client component issues
-    const serializedExperiences = experiences.map(experience => ({
-      ...experience,
-      basePrice: Number(experience.basePrice)
-    }))
+    // No decimal serialization needed for experiences anymore
+    const serializedExperiences = experiences
 
     return NextResponse.json(serializedExperiences)
   } catch (error) {

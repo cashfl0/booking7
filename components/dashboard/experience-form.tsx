@@ -10,7 +10,6 @@ interface Experience {
   id?: string
   name: string
   description: string | null
-  basePrice: number
   duration: number
   maxCapacity: number
   isActive: boolean
@@ -30,7 +29,6 @@ export function ExperienceForm({ experience, onSubmit, onCancel, isLoading }: Ex
   const [formData, setFormData] = useState({
     name: experience?.name || '',
     description: experience?.description || '',
-    basePrice: experience?.basePrice || 0,
     duration: experience?.duration || 60,
     maxCapacity: experience?.maxCapacity || 10,
     isActive: experience?.isActive ?? true
@@ -46,9 +44,6 @@ export function ExperienceForm({ experience, onSubmit, onCancel, isLoading }: Ex
     const newErrors: Record<string, string> = {}
     if (!formData.name.trim()) {
       newErrors.name = 'Name is required'
-    }
-    if (formData.basePrice < 0) {
-      newErrors.basePrice = 'Price must be positive'
     }
     if (formData.duration < 1) {
       newErrors.duration = 'Duration must be at least 1 minute'
@@ -66,7 +61,6 @@ export function ExperienceForm({ experience, onSubmit, onCancel, isLoading }: Ex
       await onSubmit({
         name: formData.name.trim(),
         description: formData.description.trim() || null,
-        basePrice: Number(formData.basePrice),
         duration: Number(formData.duration),
         maxCapacity: Number(formData.maxCapacity),
         isActive: formData.isActive
@@ -103,20 +97,6 @@ export function ExperienceForm({ experience, onSubmit, onCancel, isLoading }: Ex
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="basePrice">Base Price ($)</Label>
-          <Input
-            id="basePrice"
-            type="number"
-            min="0"
-            step="0.01"
-            value={formData.basePrice}
-            onChange={(e) => setFormData({ ...formData, basePrice: parseFloat(e.target.value) || 0 })}
-            className={errors.basePrice ? 'border-red-500' : ''}
-          />
-          {errors.basePrice && <p className="text-sm text-red-500 mt-1">{errors.basePrice}</p>}
-        </div>
-
-        <div>
           <Label htmlFor="duration">Duration (minutes)</Label>
           <Input
             id="duration"
@@ -128,19 +108,19 @@ export function ExperienceForm({ experience, onSubmit, onCancel, isLoading }: Ex
           />
           {errors.duration && <p className="text-sm text-red-500 mt-1">{errors.duration}</p>}
         </div>
-      </div>
 
-      <div>
-        <Label htmlFor="maxCapacity">Maximum Capacity</Label>
-        <Input
-          id="maxCapacity"
-          type="number"
-          min="1"
-          value={formData.maxCapacity}
-          onChange={(e) => setFormData({ ...formData, maxCapacity: parseInt(e.target.value) || 0 })}
-          className={errors.maxCapacity ? 'border-red-500' : ''}
-        />
-        {errors.maxCapacity && <p className="text-sm text-red-500 mt-1">{errors.maxCapacity}</p>}
+        <div>
+          <Label htmlFor="maxCapacity">Maximum Capacity</Label>
+          <Input
+            id="maxCapacity"
+            type="number"
+            min="1"
+            value={formData.maxCapacity}
+            onChange={(e) => setFormData({ ...formData, maxCapacity: parseInt(e.target.value) || 0 })}
+            className={errors.maxCapacity ? 'border-red-500' : ''}
+          />
+          {errors.maxCapacity && <p className="text-sm text-red-500 mt-1">{errors.maxCapacity}</p>}
+        </div>
       </div>
 
       <div className="flex items-center space-x-2">

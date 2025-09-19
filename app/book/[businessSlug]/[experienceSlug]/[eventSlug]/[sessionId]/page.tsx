@@ -130,8 +130,7 @@ export default async function TicketSelectionPage({ params }: TicketSelectionPag
 
   // Serialize data to avoid Decimal issues
   const serializedExperience = {
-    ...experience,
-    basePrice: Number(experience.basePrice)
+    ...experience
   }
 
   const serializedSession = {
@@ -140,9 +139,9 @@ export default async function TicketSelectionPage({ params }: TicketSelectionPag
     endTime: session.endTime.toISOString(),
     event: {
       ...session.event,
+      basePrice: Number(session.event.basePrice),
       experience: {
-        ...session.event.experience,
-        basePrice: Number(session.event.experience.basePrice)
+        ...session.event.experience
       }
     }
   }
@@ -156,7 +155,7 @@ export default async function TicketSelectionPage({ params }: TicketSelectionPag
     <TicketSelectionClient
       business={business}
       experience={serializedExperience}
-      event={event}
+      event={serializedSession.event}
       session={serializedSession}
       availableCapacity={availableCapacity}
       addOns={serializedAddOns}

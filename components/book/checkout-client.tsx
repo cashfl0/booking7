@@ -17,13 +17,13 @@ interface Experience {
   id: string
   name: string
   slug: string
-  basePrice: number
 }
 
 interface Event {
   id: string
   name: string
   slug: string
+  basePrice: number
 }
 
 interface Session {
@@ -72,15 +72,15 @@ export function CheckoutClient({
 
   // Parse cart from URL params (simplified for now)
   const ticketQuantity = parseInt(initialCart.tickets as string) || 1
-  const sessionPrice = Number(experience.basePrice) || 0
+  const sessionPrice = Number(event.basePrice) || 0
   const total = (isNaN(sessionPrice) ? 0 : sessionPrice) * (isNaN(ticketQuantity) ? 1 : ticketQuantity)
 
   console.log('Checkout debug:', {
-    experienceBasePrice: experience.basePrice,
+    eventBasePrice: event.basePrice,
     sessionPrice,
     ticketQuantity,
     total,
-    experiencePriceType: typeof experience.basePrice
+    eventPriceType: typeof event.basePrice
   })
 
   const handleInputChange = (field: keyof GuestForm, value: string | boolean) => {
