@@ -97,9 +97,37 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'End date must be after start date' }, { status: 400 })
     }
 
+    // Generate slug from name
+    const baseSlug = validatedData.name
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '')
+
+    // Ensure slug is unique within the experience
+    let slug = baseSlug
+    let counter = 1
+
+    while (true) {
+      const existingEvent = await prisma.event.findFirst({
+        where: {
+          experienceId: validatedData.experienceId,
+          slug: slug
+        }
+      })
+
+      if (!existingEvent) {
+        break
+      }
+
+      slug = `${baseSlug}-${counter}`
+      counter++
+    }
+
     const event = await prisma.event.create({
       data: {
         name: validatedData.name,
+        slug: slug,
         description: validatedData.description || null,
         startDate: startDate,
         endDate: endDate,

@@ -37,20 +37,25 @@ model Business {
   users       User[]
   experiences Experience[]
   addOns      AddOn[]
+  guests      Guest[]
 
   @@map("businesses")
 }
 
 model Guest {
-  id        String   @id @default(cuid())
-  firstName String
-  lastName  String
-  email     String
-  phone     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String   @id @default(cuid())
+  firstName      String
+  lastName       String
+  email          String
+  phone          String?
+  zipCode        String?
+  marketingOptIn Boolean  @default(false)
+  businessId     String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   // Relations
+  business Business? @relation(fields: [businessId], references: [id], onDelete: Cascade)
   bookings Booking[]
 
   @@map("guests")
@@ -81,6 +86,7 @@ model Experience {
 model Event {
   id           String   @id @default(cuid())
   name         String
+  slug         String
   description  String?
   startDate    DateTime
   endDate      DateTime
@@ -95,6 +101,7 @@ model Event {
   sessions   Session[]
   addOns     EventAddOn[]
 
+  @@unique([experienceId, slug])
   @@map("events")
 }
 

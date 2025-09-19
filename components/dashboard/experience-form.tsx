@@ -14,11 +14,14 @@ interface Experience {
   duration: number
   maxCapacity: number
   isActive: boolean
+  business: {
+    slug: string
+  }
 }
 
 interface ExperienceFormProps {
   experience?: Experience
-  onSubmit: (data: Omit<Experience, 'id' | 'slug' | 'sortOrder' | 'events'>) => Promise<void>
+  onSubmit: (data: Omit<Experience, 'id' | 'slug' | 'sortOrder' | 'events' | 'business'>) => Promise<void>
   onCancel: () => void
   isLoading?: boolean
 }

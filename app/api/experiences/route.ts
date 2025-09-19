@@ -27,6 +27,11 @@ export async function GET() {
         businessId: session.user.businessId
       },
       include: {
+        business: {
+          select: {
+            slug: true
+          }
+        },
         events: {
           include: {
             sessions: true
@@ -36,7 +41,13 @@ export async function GET() {
       orderBy: { sortOrder: 'asc' }
     })
 
-    return NextResponse.json(experiences)
+    // Serialize Decimal values to avoid client component issues
+    const serializedExperiences = experiences.map(experience => ({
+      ...experience,
+      basePrice: Number(experience.basePrice)
+    }))
+
+    return NextResponse.json(serializedExperiences)
   } catch (error) {
     console.error('Error fetching experiences:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
