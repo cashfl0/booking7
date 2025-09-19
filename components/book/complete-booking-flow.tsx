@@ -66,11 +66,11 @@ export function CompleteBookingFlow({
   // Payment Form State
   const [showPaymentForm, setShowPaymentForm] = useState(false)
   const [paymentForm, setPaymentForm] = useState<PaymentForm>({
-    cardNumber: '',
-    expiryDate: '',
-    cvv: '',
-    nameOnCard: '',
-    billingZip: ''
+    cardNumber: '4242 4242 4242 4242',
+    expiryDate: '12/28',
+    cvv: '123',
+    nameOnCard: 'Test User',
+    billingZip: '12345'
   })
 
   // Payment & Confirmation State
