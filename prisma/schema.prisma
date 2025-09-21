@@ -141,19 +141,20 @@ model EventAddOn {
 }
 
 model Booking {
-  id            String        @id @default(cuid())
+  id            String                 @id @default(cuid())
   sessionId     String
   guestId       String
   quantity      Int
-  total         Decimal       @db.Decimal(10, 2)
-  status        BookingStatus @default(PENDING)
-  checkedIn     Boolean       @default(false)
+  total         Decimal                @db.Decimal(10, 2)
+  status        BookingStatus          @default(PENDING)
+  checkedIn     Boolean                @default(false)
   checkInTime   DateTime?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
   items         BookingItem[]
-  guest         Guest         @relation(fields: [guestId], references: [id])
-  session       Session       @relation(fields: [sessionId], references: [id])
+  communications BookingCommunication[]
+  guest         Guest                  @relation(fields: [guestId], references: [id])
+  session       Session                @relation(fields: [sessionId], references: [id])
 
   @@map("bookings")
 }
@@ -183,6 +184,60 @@ enum BookingStatus {
   CONFIRMED
   COMPLETED
   CANCELLED
+}
+
+model BookingCommunication {
+  id           String               @id @default(cuid())
+  bookingId    String
+  type         CommunicationType
+  channel      CommunicationChannel @default(EMAIL)
+  direction    CommunicationDirection @default(OUTBOUND)
+  status       CommunicationStatus  @default(PENDING)
+  sentAt       DateTime?
+  deliveredAt  DateTime?
+  receivedAt   DateTime?            // For inbound messages
+  errorMessage String?
+  messageId    String?              // SendGrid/Twilio message ID for tracking
+  subject      String?              // Email subject or SMS preview
+  content      String?              // Message content (for inbound messages)
+  fromAddress  String?              // Sender email/phone for inbound
+  toAddress    String?              // Recipient email/phone
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  booking      Booking              @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@map("booking_communications")
+}
+
+enum CommunicationType {
+  CONFIRMATION
+  REMINDER_24H
+  REMINDER_1H
+  CANCELLATION
+  WAIVER_REQUEST
+  MARKETING
+  CUSTOMER_REPLY
+  CUSTOMER_INQUIRY
+}
+
+enum CommunicationChannel {
+  EMAIL
+  SMS
+  PUSH
+}
+
+enum CommunicationDirection {
+  OUTBOUND
+  INBOUND
+}
+
+enum CommunicationStatus {
+  PENDING
+  SENT
+  DELIVERED
+  FAILED
+  BOUNCED
+  RECEIVED
 }
 
 enum BookingItemType {
