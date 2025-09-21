@@ -78,15 +78,15 @@ class AnalyticsService {
     await new Promise<void>((resolve) => {
       script.onload = () => {
         // Initialize gtag
-        const gtag = (window as Record<string, unknown>).gtag as ((...args: unknown[]) => void)
+        const gtag = (window as unknown as Record<string, unknown>).gtag as ((...args: unknown[]) => void)
         if (!gtag) {
-          (window as Record<string, unknown>).dataLayer = (window as Record<string, unknown>).dataLayer || []
-          ;(window as Record<string, unknown>).gtag = function(...args: unknown[]) {
-            ;((window as Record<string, unknown>).dataLayer as unknown[]).push(args)
+          (window as unknown as Record<string, unknown>).dataLayer = (window as unknown as Record<string, unknown>).dataLayer || []
+          ;(window as unknown as Record<string, unknown>).gtag = function(...args: unknown[]) {
+            ;((window as unknown as Record<string, unknown>).dataLayer as unknown[]).push(args)
           }
         }
 
-        const gtagFn = (window as Record<string, unknown>).gtag as (...args: unknown[]) => void
+        const gtagFn = (window as unknown as Record<string, unknown>).gtag as (...args: unknown[]) => void
         gtagFn('js', new Date())
         gtagFn('config', trackingId)
 
@@ -114,21 +114,21 @@ class AnalyticsService {
     })(document, 'script', 'facebook-pixel')
 
     // Initialize pixel
-    const fb = (window as Record<string, unknown>).fbq as ((...args: unknown[]) => void) || function(...args: unknown[]) {
-      if (((window as Record<string, unknown>).fbq as Record<string, unknown>).callMethod) {
-        ((window as Record<string, unknown>).fbq as Record<string, unknown>).callMethod.call(
-          (window as Record<string, unknown>).fbq as Record<string, unknown>, ...args
-        )
+    const fb = (window as unknown as Record<string, unknown>).fbq as ((...args: unknown[]) => void) || function(...args: unknown[]) {
+      const fbqObj = (window as unknown as Record<string, unknown>).fbq as Record<string, unknown>
+      if (fbqObj.callMethod) {
+        // Use apply instead of call for better type safety
+        (fbqObj.callMethod as (...args: unknown[]) => unknown)(...args)
       } else {
-        ((window as Record<string, unknown>).fbq as Record<string, unknown>).queue.push(args)
+        (fbqObj.queue as unknown[]).push(args)
       }
     }
 
-    ;(window as Record<string, unknown>).fbq = fb
-    ;((window as Record<string, unknown>).fbq as Record<string, unknown>).push = fb
-    ;((window as Record<string, unknown>).fbq as Record<string, unknown>).loaded = true
-    ;((window as Record<string, unknown>).fbq as Record<string, unknown>).version = '2.0'
-    ;((window as Record<string, unknown>).fbq as Record<string, unknown>).queue = []
+    ;(window as unknown as Record<string, unknown>).fbq = fb
+    ;((window as unknown as Record<string, unknown>).fbq as Record<string, unknown>).push = fb
+    ;((window as unknown as Record<string, unknown>).fbq as Record<string, unknown>).loaded = true
+    ;((window as unknown as Record<string, unknown>).fbq as Record<string, unknown>).version = '2.0'
+    ;((window as unknown as Record<string, unknown>).fbq as Record<string, unknown>).queue = []
 
     fb('init', pixelId)
     fb('track', 'PageView')
@@ -178,8 +178,8 @@ class AnalyticsService {
   trackEvent(eventData: EventData): void {
     try {
       // Google Analytics 4
-      if ((window as Record<string, unknown>).gtag) {
-        const gtag = (window as Record<string, unknown>).gtag as ((...args: unknown[]) => void)
+      if ((window as unknown as Record<string, unknown>).gtag) {
+        const gtag = (window as unknown as Record<string, unknown>).gtag as ((...args: unknown[]) => void)
         gtag('event', eventData.event_name, {
           business_slug: eventData.business_slug,
           page_path: eventData.page_path,
@@ -190,8 +190,8 @@ class AnalyticsService {
       }
 
       // Meta Pixel
-      if ((window as Record<string, unknown>).fbq) {
-        const fbq = (window as Record<string, unknown>).fbq as (...args: unknown[]) => void
+      if ((window as unknown as Record<string, unknown>).fbq) {
+        const fbq = (window as unknown as Record<string, unknown>).fbq as (...args: unknown[]) => void
         const eventName = this.mapEventToMetaPixel(eventData.event_name)
         if (eventName) {
           fbq('track', eventName, {
@@ -203,8 +203,8 @@ class AnalyticsService {
       }
 
       // TikTok Pixel
-      if ((window as Record<string, unknown>).ttq) {
-        const ttq = (window as Record<string, unknown>).ttq as (...args: unknown[]) => void
+      if ((window as unknown as Record<string, unknown>).ttq) {
+        const ttq = (window as unknown as Record<string, unknown>).ttq as { track: (...args: unknown[]) => void }
         const eventName = this.mapEventToTikTok(eventData.event_name)
         if (eventName) {
           ttq.track(eventName, {
@@ -216,8 +216,8 @@ class AnalyticsService {
       }
 
       // Snapchat Pixel
-      if ((window as Record<string, unknown>).snaptr) {
-        const snaptr = (window as Record<string, unknown>).snaptr as (...args: unknown[]) => void
+      if ((window as unknown as Record<string, unknown>).snaptr) {
+        const snaptr = (window as unknown as Record<string, unknown>).snaptr as (...args: unknown[]) => void
         const eventName = this.mapEventToSnapchat(eventData.event_name)
         if (eventName) {
           snaptr('track', eventName, {
