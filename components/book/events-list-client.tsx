@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import { Calendar, Clock, Users } from 'lucide-react'
+import { useAnalytics } from '@/components/analytics/analytics-provider'
 
 interface Business {
   id: string
@@ -39,6 +40,20 @@ interface EventsListClientProps {
 }
 
 export function EventsListClient({ business, experience, events }: EventsListClientProps) {
+  const { trackEvent } = useAnalytics(business.slug)
+
+  const handleEventClick = (event: Event) => {
+    trackEvent({
+      event_name: 'view_item',
+      page_path: `/book/${business.slug}/${experience.slug}/${event.slug}`,
+      items: [{
+        item_id: event.id,
+        item_name: event.name,
+        item_category: experience.name
+      }]
+    })
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-md mx-auto bg-white min-h-screen">
@@ -88,6 +103,7 @@ export function EventsListClient({ business, experience, events }: EventsListCli
                   key={event.id}
                   href={`/book/${business.slug}/${experience.slug}/${event.slug}`}
                   className="block"
+                  onClick={() => handleEventClick(event)}
                 >
                   <Card className="hover:shadow-md transition-shadow">
                     <CardContent className="p-6">

@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { signOut } from 'next-auth/react'
+import { useState } from 'react'
 import {
   LayoutDashboard,
   Star,
@@ -14,7 +15,8 @@ import {
   Megaphone,
   Settings,
   LogOut,
-  ChevronDown
+  ChevronDown,
+  ChevronRight
 } from 'lucide-react'
 
 const navigation = [
@@ -32,11 +34,26 @@ const navigation = [
   { name: 'Guests', href: '/dashboard/guests', icon: Users },
   { name: 'Reports', href: '/dashboard/reports', icon: BarChart3 },
   { name: 'Marketing', href: '/dashboard/marketing', icon: Megaphone },
-  { name: 'Settings', href: '/dashboard/settings', icon: Settings },
+  {
+    name: 'Settings',
+    href: '/dashboard/settings',
+    icon: Settings,
+    children: [
+      { name: 'Analytics Tracking', href: '/dashboard/settings/analytics', icon: BarChart3 },
+    ]
+  },
 ]
 
 export function DashboardSidebar() {
   const pathname = usePathname()
+  const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({})
+
+  const toggleMenu = (menuName: string) => {
+    setExpandedMenus(prev => ({
+      ...prev,
+      [menuName]: !prev[menuName]
+    }))
+  }
 
   return (
     <div className="flex flex-col w-64 bg-gray-900 min-h-screen">
@@ -53,26 +70,43 @@ export function DashboardSidebar() {
           const isActive = pathname === item.href
           const hasChildren = item.children && item.children.length > 0
           const isParentActive = hasChildren && item.children.some(child => pathname === child.href)
+          const isExpanded = expandedMenus[item.name] || isParentActive
 
           return (
             <div key={item.name}>
-              <Link
-                href={item.href}
-                className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
-                  isActive || isParentActive
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                }`}
-              >
-                <item.icon className="w-5 h-5 mr-3" />
-                {item.name}
-                {hasChildren && (
-                  <ChevronDown className="w-4 h-4 ml-auto" />
-                )}
-              </Link>
+              {hasChildren ? (
+                <button
+                  onClick={() => toggleMenu(item.name)}
+                  className={`flex items-center w-full px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
+                    isActive || isParentActive
+                      ? 'bg-blue-600 text-white'
+                      : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                  }`}
+                >
+                  <item.icon className="w-5 h-5 mr-3" />
+                  {item.name}
+                  {isExpanded ? (
+                    <ChevronDown className="w-4 h-4 ml-auto" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4 ml-auto" />
+                  )}
+                </button>
+              ) : (
+                <Link
+                  href={item.href}
+                  className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
+                    isActive
+                      ? 'bg-blue-600 text-white'
+                      : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                  }`}
+                >
+                  <item.icon className="w-5 h-5 mr-3" />
+                  {item.name}
+                </Link>
+              )}
 
               {/* Sub-navigation */}
-              {hasChildren && (
+              {hasChildren && isExpanded && (
                 <div className="ml-6 mt-2 space-y-1">
                   {item.children.map((child) => {
                     const isChildActive = pathname === child.href

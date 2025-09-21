@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { EventsListClient } from '@/components/book/events-list-client'
+import { AnalyticsProvider } from '@/components/analytics/analytics-provider'
 
 interface EventsPageProps {
   params: Promise<{
@@ -113,10 +114,12 @@ export default async function EventsPage({ params }: EventsPageProps) {
   }
 
   return (
-    <EventsListClient
-      business={business}
-      experience={serializedExperience}
-      events={availableEvents}
-    />
+    <AnalyticsProvider businessSlug={businessSlug}>
+      <EventsListClient
+        business={business}
+        experience={serializedExperience}
+        events={availableEvents}
+      />
+    </AnalyticsProvider>
   )
 }

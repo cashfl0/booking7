@@ -42,7 +42,14 @@ const navigation: NavigationItem[] = [
   { name: 'Guests', href: '/dashboard/guests', icon: Users },
   { name: 'Reports', href: '/dashboard/reports', icon: BarChart3 },
   { name: 'Marketing', href: '/dashboard/marketing', icon: Megaphone },
-  { name: 'Settings', href: '/dashboard/settings', icon: Settings },
+  {
+    name: 'Settings',
+    href: '/dashboard/settings',
+    icon: Settings,
+    children: [
+      { name: 'Analytics Tracking', href: '/dashboard/settings/analytics', icon: BarChart3 },
+    ]
+  },
 ]
 
 export function MobileDashboard({ children }: { children: React.ReactNode }) {

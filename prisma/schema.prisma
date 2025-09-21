@@ -23,16 +23,17 @@ model User {
 }
 
 model Business {
-  id          String       @id @default(cuid())
-  name        String
-  slug        String       @unique
-  description String?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  addOns      AddOn[]
-  experiences Experience[]
-  guests      Guest[]
-  users       User[]
+  id               String              @id @default(cuid())
+  name             String
+  slug             String              @unique
+  description      String?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  addOns           AddOn[]
+  experiences      Experience[]
+  guests           Guest[]
+  users            User[]
+  analyticsTracking AnalyticsTracking[]
 
   @@map("businesses")
 }
@@ -238,6 +239,30 @@ enum CommunicationStatus {
   FAILED
   BOUNCED
   RECEIVED
+}
+
+model AnalyticsTracking {
+  id          String            @id @default(cuid())
+  businessId  String
+  platform    AnalyticsPlatform
+  trackingId  String
+  isEnabled   Boolean           @default(true)
+  environment String?           // 'production', 'staging', etc.
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  business    Business          @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@unique([businessId, platform])
+  @@map("analytics_tracking")
+}
+
+enum AnalyticsPlatform {
+  GOOGLE_ANALYTICS
+  META_PIXEL
+  TIKTOK_PIXEL
+  GOOGLE_ADS
+  SNAPCHAT_PIXEL
 }
 
 enum BookingItemType {

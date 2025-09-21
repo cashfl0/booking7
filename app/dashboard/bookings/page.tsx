@@ -85,7 +85,9 @@ async function getBookingsData(): Promise<{
       session: {
         include: {
           event: {
-            include: {
+            select: {
+              id: true,
+              name: true,
               experience: {
                 select: {
                   id: true,

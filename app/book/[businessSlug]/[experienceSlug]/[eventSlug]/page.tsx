@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { CompleteBookingFlow } from '@/components/book/complete-booking-flow'
+import { AnalyticsProvider } from '@/components/analytics/analytics-provider'
 
 interface SessionSelectionPageProps {
   params: Promise<{
@@ -120,12 +121,14 @@ export default async function SessionSelectionPage({ params }: SessionSelectionP
   }))
 
   return (
-    <CompleteBookingFlow
-      business={business}
-      experience={serializedExperience}
-      event={serializedEvent}
-      sessionsByDate={sessionsByDate}
-      addOns={serializedAddOns}
-    />
+    <AnalyticsProvider businessSlug={businessSlug}>
+      <CompleteBookingFlow
+        business={business}
+        experience={serializedExperience}
+        event={serializedEvent}
+        sessionsByDate={sessionsByDate}
+        addOns={serializedAddOns}
+      />
+    </AnalyticsProvider>
   )
 }
