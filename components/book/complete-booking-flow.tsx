@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { ArrowLeft } from 'lucide-react'
+import { useAnalytics } from '@/components/analytics/analytics-provider'
 
 // Import all section components
 import { DateTimeSelection } from './sections/date-time-selection'
@@ -42,6 +43,8 @@ export function CompleteBookingFlow({
   sessionsByDate,
   addOns
 }: CompleteBookingFlowProps) {
+  const { trackEvent } = useAnalytics(business.slug)
+
   // Date/Time Selection State
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [selectedSession, setSelectedSession] = useState<Session | null>(null)
@@ -161,6 +164,19 @@ export function CompleteBookingFlow({
   }
 
   const handleProceedToCheckout = () => {
+    // Track begin_checkout event
+    trackEvent({
+      event_name: 'begin_checkout',
+      value: totalPrice,
+      currency: 'USD',
+      items: cartItems.map(item => ({
+        item_id: item.id,
+        item_name: item.name,
+        price: item.price,
+        quantity: item.quantity
+      }))
+    })
+
     setShowCheckoutForm(true)
     setTimeout(() => {
       const checkoutSection = document.getElementById('checkout-section')
@@ -171,6 +187,13 @@ export function CompleteBookingFlow({
   }
 
   const handleProceedToPayment = () => {
+    // Track add_payment_info event
+    trackEvent({
+      event_name: 'add_payment_info',
+      value: totalPrice,
+      currency: 'USD'
+    })
+
     setShowPaymentForm(true)
     setTimeout(() => {
       const paymentSection = document.getElementById('payment-section')
@@ -224,6 +247,19 @@ export function CompleteBookingFlow({
       const result = await response.json()
       setConfirmationData(result)
       setBookingConfirmed(true)
+
+      // Track purchase completion
+      trackEvent({
+        event_name: 'purchase',
+        value: totalPrice,
+        currency: 'USD',
+        items: cartItems.map(item => ({
+          item_id: item.id,
+          item_name: item.name,
+          price: item.price,
+          quantity: item.quantity
+        }))
+      })
 
       // Scroll to confirmation
       setTimeout(() => {
