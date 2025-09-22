@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -8,7 +9,6 @@ import { Select } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
 import { Calendar, User, Package, Filter } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
-import { BookingDetailModal } from './booking-detail-modal'
 
 interface BookingItem {
   id: string
@@ -69,19 +69,14 @@ interface BookingListProps {
   initialBookings: Booking[]
   experiences: Experience[]
   events: Event[]
-  onBookingUpdate: (updatedBooking: Booking) => void
-  autoOpenBookingId?: string | null
-  onAutoOpenComplete?: () => void
 }
 
 export function BookingList({
   initialBookings,
   experiences,
-  events,
-  onBookingUpdate,
-  autoOpenBookingId,
-  onAutoOpenComplete
+  events
 }: BookingListProps) {
+  const router = useRouter()
   const [bookings, setBookings] = useState<Booking[]>(initialBookings)
   const [filteredEvents, setFilteredEvents] = useState<Event[]>(events)
   const [loading, setLoading] = useState(false)
@@ -91,7 +86,6 @@ export function BookingList({
     eventId: '',
     status: ''
   })
-  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
 
   // Update filtered events when experience filter changes
   useEffect(() => {
@@ -107,16 +101,6 @@ export function BookingList({
     }
   }, [filters.experienceId, events, filters.eventId])
 
-  // Auto-open booking if bookingId is provided
-  useEffect(() => {
-    if (autoOpenBookingId && bookings.length > 0) {
-      const booking = bookings.find(b => b.id === autoOpenBookingId)
-      if (booking) {
-        setSelectedBooking(booking)
-        onAutoOpenComplete?.()
-      }
-    }
-  }, [autoOpenBookingId, bookings, onAutoOpenComplete])
 
   const fetchBookings = async () => {
     setLoading(true)
@@ -184,19 +168,7 @@ export function BookingList({
   }
 
   const handleBookingClick = (booking: Booking) => {
-    setSelectedBooking(booking)
-  }
-
-  const handleBookingUpdate = (updatedBooking: Booking) => {
-    setBookings(prev => prev.map(booking =>
-      booking.id === updatedBooking.id ? updatedBooking : booking
-    ))
-    onBookingUpdate(updatedBooking)
-    setSelectedBooking(null)
-  }
-
-  const handleModalClose = () => {
-    setSelectedBooking(null)
+    router.push(`/dashboard/bookings/${booking.id}`)
   }
 
   return (
@@ -384,14 +356,6 @@ export function BookingList({
         </div>
       )}
 
-      {/* Booking Detail Modal */}
-      {selectedBooking && (
-        <BookingDetailModal
-          booking={selectedBooking}
-          onClose={handleModalClose}
-          onUpdate={handleBookingUpdate}
-        />
-      )}
     </div>
   )
 }
