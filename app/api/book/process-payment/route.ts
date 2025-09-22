@@ -220,14 +220,17 @@ export async function POST(request: NextRequest) {
           base64Length: attachments?.[0]?.content?.length
         })
 
-        // Send email with QR code attachment
+        // Send email with QR code attachment and tracking
         console.log('📤 Sending email via SendGrid...')
         await emailService.sendEmail({
           to: booking.guest.email,
           subject: emailTemplate.subject,
           html: emailTemplate.html,
           text: emailTemplate.text,
-          attachments
+          attachments,
+          bookingId: booking.id,
+          businessSlug: booking.session.event.experience.business.slug,
+          communicationType: 'CONFIRMATION'
         })
 
         console.log('✅ Email sent successfully via SendGrid!')

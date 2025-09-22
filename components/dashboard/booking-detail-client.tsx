@@ -10,6 +10,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Edit3, Save, Calendar, User, Package, MapPin } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
+import { CommunicationHistory } from './communication-history'
+import { EmailGuest } from './email-guest'
 
 interface BookingItem {
   id: string
@@ -63,6 +65,7 @@ export function BookingDetailClient({ booking: initialBooking }: BookingDetailCl
   const [booking, setBooking] = useState(initialBooking)
   const [isEditing, setIsEditing] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false)
+  const [refreshCommunications, setRefreshCommunications] = useState(0)
   const [editedBooking, setEditedBooking] = useState({
     status: booking.status,
     quantity: booking.quantity
@@ -117,6 +120,11 @@ export function BookingDetailClient({ booking: initialBooking }: BookingDetailCl
       quantity: booking.quantity
     })
     setIsEditing(false)
+  }
+
+  const handleEmailSent = () => {
+    // Trigger refresh of communication history
+    setRefreshCommunications(prev => prev + 1)
   }
 
   const sessionItems = booking.items.filter(item => item.itemType === 'SESSION')
@@ -337,6 +345,20 @@ export function BookingDetailClient({ booking: initialBooking }: BookingDetailCl
             </div>
           </CardContent>
         </Card>
+
+        {/* Email Guest */}
+        <EmailGuest
+          bookingId={booking.id}
+          guestEmail={booking.guest.email}
+          guestName={`${booking.guest.firstName} ${booking.guest.lastName}`}
+          onEmailSent={handleEmailSent}
+        />
+
+        {/* Communication History */}
+        <CommunicationHistory
+          bookingId={booking.id}
+          refreshTrigger={refreshCommunications}
+        />
 
         {/* Metadata */}
         <Card>
