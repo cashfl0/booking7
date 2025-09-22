@@ -38,25 +38,52 @@ export class EmailParser {
       // Debug: Show first 1000 chars to understand structure better
       console.log('📧 Raw email preview (first 1000 chars):', rawEmail.substring(0, 1000))
 
-      // Strategy 1: Look for text content patterns in the raw email
-      // Many email clients put the actual reply at the beginning
-      const patterns = [
-        // Pattern 1: Look for content before "On <date>" or "From:" patterns
-        /^([^]*?)(?=\n\s*On\s+.*?wrote:|From:\s|Sent:\s|Date:\s)/im,
-        // Pattern 2: Look for content before quoted sections (>)
-        /^([^]*?)(?=\n\s*>)/m,
-        // Pattern 3: Look for content before reply separators
-        /^([^]*?)(?=\n\s*_{10,}|\n\s*-{10,})/m
-      ]
+      // Strategy 1: Skip email headers and look for actual message content
+      // First, find where headers end (after the last header line before a blank line)
+      const lines = rawEmail.split('\n')
+      let messageStartIndex = -1
 
-      for (const pattern of patterns) {
-        const match = rawEmail.match(pattern)
-        if (match && match[1]) {
-          const content = match[1].trim()
-          // Only consider it valid if it has some meaningful content (not just headers)
-          if (content.length > 10 && !content.match(/^(Content-Type:|Content-Transfer-Encoding:|MIME-Version:)/i)) {
-            console.log('📧 Extracted using pattern match:', content.substring(0, 200))
-            return this.cleanReplyContent(content)
+      for (let i = 0; i < lines.length - 1; i++) {
+        const currentLine = lines[i].trim()
+        const nextLine = lines[i + 1].trim()
+
+        // Look for transition from headers to message body (blank line after headers)
+        if (currentLine.length > 0 &&
+            (currentLine.match(/^[A-Za-z-]+:\s/) || currentLine.match(/^\s+/)) && // Header line or continuation
+            nextLine === '') { // Followed by blank line
+          messageStartIndex = i + 2 // Start after the blank line
+          console.log('📧 Found message start at line:', messageStartIndex)
+          break
+        }
+      }
+
+      if (messageStartIndex > 0 && messageStartIndex < lines.length) {
+        // Extract content from message start
+        const messageLines = lines.slice(messageStartIndex)
+        const messageContent = messageLines.join('\n')
+
+        // Look for patterns in the actual message content
+        const patterns = [
+          // Pattern 1: Content before "On <date>" or reply patterns
+          /^([^]*?)(?=\n\s*On\s+.*?wrote:|From:\s|Sent:\s)/im,
+          // Pattern 2: Content before quoted sections (>)
+          /^([^]*?)(?=\n\s*>)/m,
+          // Pattern 3: Content before reply separators
+          /^([^]*?)(?=\n\s*_{10,}|\n\s*-{10,})/m,
+          // Pattern 4: Just take first few non-empty lines
+          /^([^\n]*(?:\n[^\n]*){0,5})/m
+        ]
+
+        for (const pattern of patterns) {
+          const match = messageContent.match(pattern)
+          if (match && match[1]) {
+            const content = match[1].trim()
+            // Only consider it valid if it has meaningful content (not headers)
+            if (content.length > 2 &&
+                !content.match(/^(Received:|DKIM-Signature:|X-Google|X-Gm|Content-Type:|Content-Transfer-Encoding:|MIME-Version:)/i)) {
+              console.log('📧 Extracted using pattern match:', content.substring(0, 200))
+              return this.cleanReplyContent(content)
+            }
           }
         }
       }
@@ -94,20 +121,20 @@ export class EmailParser {
       }
 
       // Strategy 3: Look for simple email pattern (blank line followed by content)
-      const lines = rawEmail.split('\n')
+      const emailLines = rawEmail.split('\n')
       let foundBlankLine = false
       const contentLines: string[] = []
 
-      for (let i = 0; i < lines.length; i++) {
+      for (let i = 0; i < emailLines.length; i++) {
         if (!foundBlankLine) {
           // Look for blank line (end of headers)
-          if (lines[i].trim() === '') {
+          if (emailLines[i].trim() === '') {
             foundBlankLine = true
             continue
           }
         } else {
           // After blank line, collect content until we hit boundaries
-          const line = lines[i]
+          const line = emailLines[i]
           if (line.startsWith('--') || line.startsWith('Content-Type:') || line.match(/^From:|^Date:|^To:|^Subject:/)) {
             break
           }
@@ -221,6 +248,14 @@ export class EmailParser {
              !trimmedLine.startsWith('Content-Transfer-Encoding:') &&
              !trimmedLine.startsWith('MIME-Version:') &&
              !trimmedLine.startsWith('Content-Disposition:') &&
+             !trimmedLine.startsWith('Received:') &&
+             !trimmedLine.startsWith('DKIM-Signature:') &&
+             !trimmedLine.startsWith('X-Google') &&
+             !trimmedLine.startsWith('X-Gm') &&
+             !trimmedLine.startsWith('X-Received:') &&
+             !trimmedLine.startsWith('References:') &&
+             !trimmedLine.startsWith('In-Reply-To:') &&
+             !trimmedLine.match(/^[A-Za-z-]+:\s/) && // Generic header pattern
              trimmedLine !== '' // Remove empty lines unless they're the only content
     })
 
