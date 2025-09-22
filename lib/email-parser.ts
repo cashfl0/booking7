@@ -62,42 +62,51 @@ export class EmailParser {
    * Clean reply content by removing quoted text and signatures
    */
   static cleanReplyContent(content: string): string {
-    // Common patterns to remove quoted content
-    const quotedPatterns = [
-      /^On .* wrote:$/gm,  // "On [date] [person] wrote:"
-      /^From:.*$/gm,       // Email headers
-      /^To:.*$/gm,
-      /^Date:.*$/gm,
-      /^Subject:.*$/gm,
-      /^-----Original Message-----/gm,
-      /^________________________________/gm,  // Outlook separator
-      />.*$/gm,            // Lines starting with >
-    ]
+    console.log('🧹 Original content length:', content.length)
+    console.log('🧹 Original content preview:', content.substring(0, 200) + '...')
+
+    if (!content || content.trim().length === 0) {
+      console.warn('⚠️ Empty content received')
+      return ''
+    }
 
     let cleanContent = content.trim()
 
-    // Remove quoted patterns
-    quotedPatterns.forEach(pattern => {
-      cleanContent = cleanContent.replace(pattern, '')
-    })
-
-    // Split by common separators and take first part
+    // Split by common separators and take first part (most important step)
     const separators = [
-      '-----Original Message-----',
-      '________________________________',
-      'From:',
-      'On ',
+      '\n-----Original Message-----',
+      '\n________________________________',
+      '\nFrom:',
+      '\nOn '
     ]
 
     for (const separator of separators) {
       const separatorIndex = cleanContent.indexOf(separator)
       if (separatorIndex > 0) {
+        console.log(`🧹 Found separator "${separator}" at position ${separatorIndex}`)
         cleanContent = cleanContent.substring(0, separatorIndex)
         break
       }
     }
 
-    return cleanContent.trim()
+    // Remove lines that start with > (quoted content)
+    const lines = cleanContent.split('\n')
+    const filteredLines = lines.filter(line => {
+      const trimmedLine = line.trim()
+      // Keep lines that don't start with > and aren't email headers
+      return !trimmedLine.startsWith('>') &&
+             !trimmedLine.startsWith('From:') &&
+             !trimmedLine.startsWith('To:') &&
+             !trimmedLine.startsWith('Date:') &&
+             !trimmedLine.startsWith('Subject:')
+    })
+
+    const result = filteredLines.join('\n').trim()
+
+    console.log('🧹 Cleaned content length:', result.length)
+    console.log('🧹 Cleaned content preview:', result.substring(0, 200) + '...')
+
+    return result
   }
 
   /**
