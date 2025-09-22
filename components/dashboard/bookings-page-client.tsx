@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Calendar, Plus } from 'lucide-react'
 import { BookingList } from '@/components/dashboard/booking-list'
@@ -73,19 +72,9 @@ export function BookingsPageClient({
   experiences,
   events
 }: BookingsPageClientProps) {
-  const searchParams = useSearchParams()
   const [bookings, setBookings] = useState<Booking[]>(initialBookings)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
-  const [autoOpenBookingId, setAutoOpenBookingId] = useState<string | null>(null)
-
-  // Check for bookingId in URL params to auto-open booking detail
-  useEffect(() => {
-    const bookingId = searchParams.get('bookingId')
-    if (bookingId) {
-      setAutoOpenBookingId(bookingId)
-    }
-  }, [searchParams])
 
   const handleCreateBooking = async (bookingData: {
     sessionId: string
@@ -139,11 +128,6 @@ export function BookingsPageClient({
     setShowCreateForm(false)
   }
 
-  const handleBookingUpdate = (updatedBooking: Booking) => {
-    setBookings(prev => prev.map(booking =>
-      booking.id === updatedBooking.id ? updatedBooking : booking
-    ))
-  }
 
   if (showCreateForm) {
     return (
@@ -195,9 +179,6 @@ export function BookingsPageClient({
         initialBookings={bookings}
         experiences={experiences}
         events={events}
-        onBookingUpdate={handleBookingUpdate}
-        autoOpenBookingId={autoOpenBookingId}
-        onAutoOpenComplete={() => setAutoOpenBookingId(null)}
       />
     </div>
   )
