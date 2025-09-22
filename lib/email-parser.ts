@@ -35,29 +35,51 @@ export class EmailParser {
     try {
       console.log('📧 Extracting text from raw email, length:', rawEmail.length)
 
-      // Look for the text/plain part in the MIME email
-      const textPlainMatch = rawEmail.match(/Content-Type:\s*text\/plain[^]*?\n\n([^]*?)(?=\n--|\nContent-Type|\n$)/i)
-      if (textPlainMatch && textPlainMatch[1]) {
-        console.log('📧 Found text/plain content')
-        return textPlainMatch[1].trim()
+      // Debug: Show first 500 chars to understand structure
+      console.log('📧 Raw email preview:', rawEmail.substring(0, 500))
+
+      // Look for Content-Type: text/plain sections
+      const textPlainMatches = rawEmail.split(/Content-Type:\s*text\/plain/i)
+      if (textPlainMatches.length > 1) {
+        console.log('📧 Found text/plain section')
+        // Get everything after the first text/plain header
+        const afterTextPlain = textPlainMatches[1]
+
+        // Find the content after the headers (after \n\n)
+        const contentMatch = afterTextPlain.match(/\n\n([^]*?)(?=\n--\w|Content-Type:|$)/i)
+        if (contentMatch && contentMatch[1]) {
+          const content = contentMatch[1].trim()
+          console.log('📧 Extracted from text/plain:', content.substring(0, 100))
+          return content
+        }
       }
 
-      // If no text/plain, look for any text after the headers
-      const headerEndMatch = rawEmail.match(/\n\n([^]*?)(?=\n--|\nContent-Type|$)/i)
-      if (headerEndMatch && headerEndMatch[1]) {
-        console.log('📧 Found content after headers')
-        return headerEndMatch[1].trim()
+      // Alternative: Look for simple email pattern (blank line followed by content)
+      const lines = rawEmail.split('\n')
+      let foundBlankLine = false
+      const contentLines: string[] = []
+
+      for (let i = 0; i < lines.length; i++) {
+        if (!foundBlankLine) {
+          // Look for blank line (end of headers)
+          if (lines[i].trim() === '') {
+            foundBlankLine = true
+            continue
+          }
+        } else {
+          // After blank line, collect content until we hit boundaries
+          const line = lines[i]
+          if (line.startsWith('--') || line.startsWith('Content-Type:')) {
+            break
+          }
+          contentLines.push(line)
+        }
       }
 
-      // Look for quoted-printable content
-      const quotedPrintableMatch = rawEmail.match(/Content-Transfer-Encoding:\s*quoted-printable[^]*?\n\n([^]*?)(?=\n--|\nContent-Type|\n$)/i)
-      if (quotedPrintableMatch && quotedPrintableMatch[1]) {
-        console.log('📧 Found quoted-printable content')
-        // Basic quoted-printable decoding
-        return quotedPrintableMatch[1]
-          .replace(/=\n/g, '')  // Remove soft line breaks
-          .replace(/=([A-F0-9]{2})/g, (match, hex) => String.fromCharCode(parseInt(hex, 16)))
-          .trim()
+      if (contentLines.length > 0) {
+        const content = contentLines.join('\n').trim()
+        console.log('📧 Extracted from simple parsing:', content.substring(0, 100))
+        return content
       }
 
       console.warn('📧 Could not extract text content from raw email')
