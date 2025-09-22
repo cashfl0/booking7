@@ -77,6 +77,7 @@ async function processInboundEmail(webhookData: SendGridInboundWebhook) {
     from: webhookData.from,
     subject: webhookData.subject,
     textLength: webhookData.text?.length,
+    textPreview: webhookData.text?.substring(0, 100) + '...',
     hasHtml: !!webhookData.html,
     attachmentCount: webhookData.attachment_count
   })
@@ -127,6 +128,14 @@ async function processInboundEmail(webhookData: SendGridInboundWebhook) {
 
   // Create communication record in database
   try {
+    console.log('💾 About to save to database:', {
+      bookingId: booking.id,
+      subject: parsedEmail.subject,
+      contentLength: parsedEmail.textContent.length,
+      contentPreview: parsedEmail.textContent.substring(0, 100) + '...',
+      fromAddress: parsedEmail.fromEmail
+    })
+
     const communication = await prisma.bookingCommunication.create({
       data: {
         bookingId: booking.id,
