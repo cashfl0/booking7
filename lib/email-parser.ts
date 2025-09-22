@@ -35,26 +35,65 @@ export class EmailParser {
     try {
       console.log('📧 Extracting text from raw email, length:', rawEmail.length)
 
-      // Debug: Show first 500 chars to understand structure
-      console.log('📧 Raw email preview:', rawEmail.substring(0, 500))
+      // Debug: Show first 1000 chars to understand structure better
+      console.log('📧 Raw email preview (first 1000 chars):', rawEmail.substring(0, 1000))
 
-      // Look for Content-Type: text/plain sections
+      // Strategy 1: Look for text content patterns in the raw email
+      // Many email clients put the actual reply at the beginning
+      const patterns = [
+        // Pattern 1: Look for content before "On <date>" or "From:" patterns
+        /^([^]*?)(?=\n\s*On\s+.*?wrote:|From:\s|Sent:\s|Date:\s)/im,
+        // Pattern 2: Look for content before quoted sections (>)
+        /^([^]*?)(?=\n\s*>)/m,
+        // Pattern 3: Look for content before reply separators
+        /^([^]*?)(?=\n\s*_{10,}|\n\s*-{10,})/m
+      ]
+
+      for (const pattern of patterns) {
+        const match = rawEmail.match(pattern)
+        if (match && match[1]) {
+          const content = match[1].trim()
+          // Only consider it valid if it has some meaningful content (not just headers)
+          if (content.length > 10 && !content.match(/^(Content-Type:|Content-Transfer-Encoding:|MIME-Version:)/i)) {
+            console.log('📧 Extracted using pattern match:', content.substring(0, 200))
+            return this.cleanReplyContent(content)
+          }
+        }
+      }
+
+      // Strategy 2: Look for Content-Type: text/plain sections
       const textPlainMatches = rawEmail.split(/Content-Type:\s*text\/plain/i)
       if (textPlainMatches.length > 1) {
         console.log('📧 Found text/plain section')
         // Get everything after the first text/plain header
         const afterTextPlain = textPlainMatches[1]
 
-        // Find the content after the headers (after \n\n)
-        const contentMatch = afterTextPlain.match(/\n\n([^]*?)(?=\n--\w|Content-Type:|$)/i)
-        if (contentMatch && contentMatch[1]) {
-          const content = contentMatch[1].trim()
-          console.log('📧 Extracted from text/plain:', content.substring(0, 100))
-          return content
+        // Debug: Show more context around text/plain section
+        console.log('📧 Content after text/plain (first 800 chars):', afterTextPlain.substring(0, 800))
+
+        // Try multiple content extraction patterns
+        const contentPatterns = [
+          // Pattern 1: Content after headers until boundary
+          /\n\n([^]*?)(?=\n--\w|Content-Type:|$)/i,
+          // Pattern 2: Content after charset until boundary
+          /charset[^]*?\n\n([^]*?)(?=\n--\w|Content-Type:|$)/i,
+          // Pattern 3: Just grab everything after double newline
+          /\n\n([^]*?)$/i
+        ]
+
+        for (const pattern of contentPatterns) {
+          const contentMatch = afterTextPlain.match(pattern)
+          if (contentMatch && contentMatch[1]) {
+            const content = contentMatch[1].trim()
+            if (content.length > 0) {
+              console.log('📧 Extracted from text/plain with pattern:', content.substring(0, 200))
+              return this.cleanReplyContent(content)
+            }
+          }
         }
       }
 
-      // Alternative: Look for simple email pattern (blank line followed by content)
+      // Strategy 3: Look for simple email pattern (blank line followed by content)
       const lines = rawEmail.split('\n')
       let foundBlankLine = false
       const contentLines: string[] = []
@@ -69,7 +108,7 @@ export class EmailParser {
         } else {
           // After blank line, collect content until we hit boundaries
           const line = lines[i]
-          if (line.startsWith('--') || line.startsWith('Content-Type:')) {
+          if (line.startsWith('--') || line.startsWith('Content-Type:') || line.match(/^From:|^Date:|^To:|^Subject:/)) {
             break
           }
           contentLines.push(line)
@@ -79,7 +118,15 @@ export class EmailParser {
       if (contentLines.length > 0) {
         const content = contentLines.join('\n').trim()
         console.log('📧 Extracted from simple parsing:', content.substring(0, 100))
-        return content
+        return this.cleanReplyContent(content)
+      }
+
+      // Strategy 4: Last resort - search for any line that looks like user content
+      const userContentPattern = /^[^>:\n]*\b(test\d+|thank you|thanks|yes|no|please|help|question)\b[^>:\n]*$/im
+      const userContentMatch = rawEmail.match(userContentPattern)
+      if (userContentMatch) {
+        console.log('📧 Found potential user content with pattern match:', userContentMatch[0])
+        return userContentMatch[0].trim()
       }
 
       console.warn('📧 Could not extract text content from raw email')
@@ -135,12 +182,20 @@ export class EmailParser {
 
     let cleanContent = content.trim()
 
+    // Remove common email headers at the beginning
+    cleanContent = cleanContent.replace(/^(Content-Type:|Content-Transfer-Encoding:|MIME-Version:|Content-Disposition:)[^\n]*\n/gim, '')
+
     // Split by common separators and take first part (most important step)
     const separators = [
       '\n-----Original Message-----',
       '\n________________________________',
+      '\n________________________________',
       '\nFrom:',
-      '\nOn '
+      '\nOn ',
+      '\nSent:',
+      '\nDate:',
+      '\n\n>',  // Quoted content marker
+      '\n> '   // Another quoted content marker
     ]
 
     for (const separator of separators) {
@@ -152,7 +207,7 @@ export class EmailParser {
       }
     }
 
-    // Remove lines that start with > (quoted content)
+    // Remove lines that start with > (quoted content) or are email headers
     const lines = cleanContent.split('\n')
     const filteredLines = lines.filter(line => {
       const trimmedLine = line.trim()
@@ -161,10 +216,34 @@ export class EmailParser {
              !trimmedLine.startsWith('From:') &&
              !trimmedLine.startsWith('To:') &&
              !trimmedLine.startsWith('Date:') &&
-             !trimmedLine.startsWith('Subject:')
+             !trimmedLine.startsWith('Subject:') &&
+             !trimmedLine.startsWith('Content-Type:') &&
+             !trimmedLine.startsWith('Content-Transfer-Encoding:') &&
+             !trimmedLine.startsWith('MIME-Version:') &&
+             !trimmedLine.startsWith('Content-Disposition:') &&
+             trimmedLine !== '' // Remove empty lines unless they're the only content
     })
 
-    const result = filteredLines.join('\n').trim()
+    // Join and trim again
+    let result = filteredLines.join('\n').trim()
+
+    // If result is still empty or very short, try to find any meaningful text
+    if (result.length < 3) {
+      // Look for any line in the original content that contains actual text (not headers)
+      const allLines = content.split('\n')
+      for (const line of allLines) {
+        const trimmedLine = line.trim()
+        if (trimmedLine.length > 2 &&
+            !trimmedLine.match(/^(Content-Type:|Content-Transfer-Encoding:|MIME-Version:|Content-Disposition:|From:|To:|Date:|Subject:|>)/i) &&
+            trimmedLine.match(/[a-zA-Z]/) && // Contains letters
+            !trimmedLine.match(/^[=-]{3,}/) // Not a separator line
+        ) {
+          result = trimmedLine
+          console.log('🧹 Found meaningful content in fallback search:', result)
+          break
+        }
+      }
+    }
 
     console.log('🧹 Cleaned content length:', result.length)
     console.log('🧹 Cleaned content preview:', result.substring(0, 200) + '...')
