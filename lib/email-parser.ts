@@ -168,8 +168,31 @@ export class EmailParser {
       const fromName = fromMatch[1]?.trim() || undefined
       const fromEmail = fromMatch[2]?.trim() || webhookData.from
 
+      // Get text content - prefer text, fall back to HTML if text is empty
+      let rawTextContent = webhookData.text || ''
+
+      // If no text content but we have HTML, try to extract text from HTML
+      if (!rawTextContent && webhookData.html) {
+        console.log('📧 No text content, attempting to extract from HTML')
+        // Simple HTML to text conversion (remove tags)
+        rawTextContent = webhookData.html
+          .replace(/<[^>]*>/g, '') // Remove HTML tags
+          .replace(/&nbsp;/g, ' ') // Replace &nbsp; with spaces
+          .replace(/&amp;/g, '&')  // Replace &amp; with &
+          .replace(/&lt;/g, '<')   // Replace &lt; with <
+          .replace(/&gt;/g, '>')   // Replace &gt; with >
+      }
+
+      console.log('📧 Raw content before cleaning:', {
+        hasText: !!webhookData.text,
+        hasHtml: !!webhookData.html,
+        textLength: webhookData.text?.length || 0,
+        htmlLength: webhookData.html?.length || 0,
+        finalRawLength: rawTextContent.length
+      })
+
       // Clean the reply content
-      const cleanTextContent = this.cleanReplyContent(webhookData.text || '')
+      const cleanTextContent = this.cleanReplyContent(rawTextContent)
 
       // Parse attachments if present
       let attachments: Array<{ filename: string; content: Buffer; contentType: string }> | undefined

@@ -46,6 +46,13 @@ export async function POST(request: NextRequest) {
     } else {
       // For development/testing without signature verification
       const formData = await request.formData()
+
+      // Log all fields that SendGrid is sending us
+      console.log('📋 SendGrid form data fields:')
+      for (const [key, value] of formData.entries()) {
+        console.log(`  ${key}: ${typeof value === 'string' ? value.substring(0, 100) + '...' : value}`)
+      }
+
       const webhookData: SendGridInboundWebhook = {
         to: formData.get('to')?.toString() || '',
         from: formData.get('from')?.toString() || '',
