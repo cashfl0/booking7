@@ -48,6 +48,10 @@ scripts/seed-*.js
 scripts/migrate-*.ts
 scripts/simple-seed.js
 
-# To-do list and Claude stuff for dev
+# Claude stuff for dev
 claude.md
-to-do.md
+
+# Documentation folder (private) - includes to-do.md
+docs/
+docs/*
+docs/**/*
