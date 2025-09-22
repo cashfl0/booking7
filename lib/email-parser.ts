@@ -135,7 +135,10 @@ export class EmailParser {
         } else {
           // After blank line, collect content until we hit boundaries
           const line = emailLines[i]
-          if (line.startsWith('--') || line.startsWith('Content-Type:') || line.match(/^From:|^Date:|^To:|^Subject:/)) {
+          if (line.startsWith('--') ||
+              line.startsWith('Content-Type:') ||
+              line.match(/^From:|^Date:|^To:|^Subject:/) ||
+              line.match(/^--[0-9a-f]{20,}$/)) { // MIME boundary markers
             break
           }
           contentLines.push(line)
@@ -256,6 +259,7 @@ export class EmailParser {
              !trimmedLine.startsWith('References:') &&
              !trimmedLine.startsWith('In-Reply-To:') &&
              !trimmedLine.match(/^[A-Za-z-]+:\s/) && // Generic header pattern
+             !trimmedLine.match(/^--[0-9a-f]{20,}$/) && // MIME boundary markers
              trimmedLine !== '' // Remove empty lines unless they're the only content
     })
 
