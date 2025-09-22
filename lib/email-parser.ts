@@ -23,10 +23,51 @@ export interface SendGridInboundWebhook {
   html?: string
   attachments?: string
   attachment_count?: string
+  email?: string  // Raw MIME email
   // SendGrid includes many other fields, but these are the ones we need
 }
 
 export class EmailParser {
+  /**
+   * Extract text content from raw MIME email
+   */
+  static extractTextFromRawEmail(rawEmail: string): string {
+    try {
+      console.log('📧 Extracting text from raw email, length:', rawEmail.length)
+
+      // Look for the text/plain part in the MIME email
+      const textPlainMatch = rawEmail.match(/Content-Type:\s*text\/plain[^]*?\n\n([^]*?)(?=\n--|\nContent-Type|\n$)/i)
+      if (textPlainMatch && textPlainMatch[1]) {
+        console.log('📧 Found text/plain content')
+        return textPlainMatch[1].trim()
+      }
+
+      // If no text/plain, look for any text after the headers
+      const headerEndMatch = rawEmail.match(/\n\n([^]*?)(?=\n--|\nContent-Type|$)/i)
+      if (headerEndMatch && headerEndMatch[1]) {
+        console.log('📧 Found content after headers')
+        return headerEndMatch[1].trim()
+      }
+
+      // Look for quoted-printable content
+      const quotedPrintableMatch = rawEmail.match(/Content-Transfer-Encoding:\s*quoted-printable[^]*?\n\n([^]*?)(?=\n--|\nContent-Type|\n$)/i)
+      if (quotedPrintableMatch && quotedPrintableMatch[1]) {
+        console.log('📧 Found quoted-printable content')
+        // Basic quoted-printable decoding
+        return quotedPrintableMatch[1]
+          .replace(/=\n/g, '')  // Remove soft line breaks
+          .replace(/=([A-F0-9]{2})/g, (match, hex) => String.fromCharCode(parseInt(hex, 16)))
+          .trim()
+      }
+
+      console.warn('📧 Could not extract text content from raw email')
+      return ''
+    } catch (error) {
+      console.error('📧 Error extracting text from raw email:', error)
+      return ''
+    }
+  }
+
   /**
    * Parse the reply-to address to extract business slug and booking ID
    * Format: {business-slug}+{booking-id}@ticketup.ai
@@ -168,13 +209,12 @@ export class EmailParser {
       const fromName = fromMatch[1]?.trim() || undefined
       const fromEmail = fromMatch[2]?.trim() || webhookData.from
 
-      // Get text content - prefer text, fall back to HTML if text is empty
+      // Get text content - try multiple sources in order of preference
       let rawTextContent = webhookData.text || ''
 
       // If no text content but we have HTML, try to extract text from HTML
       if (!rawTextContent && webhookData.html) {
         console.log('📧 No text content, attempting to extract from HTML')
-        // Simple HTML to text conversion (remove tags)
         rawTextContent = webhookData.html
           .replace(/<[^>]*>/g, '') // Remove HTML tags
           .replace(/&nbsp;/g, ' ') // Replace &nbsp; with spaces
@@ -183,11 +223,19 @@ export class EmailParser {
           .replace(/&gt;/g, '>')   // Replace &gt; with >
       }
 
+      // If still no content, try to extract from raw email
+      if (!rawTextContent && webhookData.email) {
+        console.log('📧 No text/html content, attempting to extract from raw email')
+        rawTextContent = this.extractTextFromRawEmail(webhookData.email)
+      }
+
       console.log('📧 Raw content before cleaning:', {
         hasText: !!webhookData.text,
         hasHtml: !!webhookData.html,
+        hasEmail: !!webhookData.email,
         textLength: webhookData.text?.length || 0,
         htmlLength: webhookData.html?.length || 0,
+        emailLength: webhookData.email?.length || 0,
         finalRawLength: rawTextContent.length
       })
 
