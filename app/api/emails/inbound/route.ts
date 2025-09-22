@@ -61,6 +61,8 @@ export async function POST(request: NextRequest) {
         html: formData.get('html')?.toString() || undefined,
         attachments: formData.get('attachments')?.toString() || undefined,
         attachment_count: formData.get('attachment_count')?.toString() || undefined,
+        // Add the raw email field
+        email: formData.get('email')?.toString() || undefined,
       }
 
       console.log('⚠️ Processing webhook without signature verification (development mode)')
